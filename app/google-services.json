@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "592492530061",
+    "project_id": "salbabida-e1b03",
+    "storage_bucket": "salbabida-e1b03.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592492530061:android:026f8c69365dd3f252d5c4",
+        "android_client_info": {
+          "package_name": "com.project.salbabida"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3ZKncHhyWxnGp3CWq6z7U9lJVEiIhidg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,93 @@
+package com.project.salbabida.data.preferences
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "salbabida_preferences")
+
+class UserPreferences(private val context: Context) {
+    
+    companion object {
+        private val KEY_SELECTED_CITY = stringPreferencesKey("selected_city")
+        private val KEY_TERMS_ACCEPTED = booleanPreferencesKey("terms_accepted")
+        private val KEY_DARK_THEME = booleanPreferencesKey("dark_theme")
+        private val KEY_DYNAMIC_COLORS = booleanPreferencesKey("dynamic_colors")
+        private val KEY_ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        private val KEY_USER_LATITUDE = doublePreferencesKey("user_latitude")
+        private val KEY_USER_LONGITUDE = doublePreferencesKey("user_longitude")
+    }
+    
+    val selectedCity: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[KEY_SELECTED_CITY]
+    }
+    
+    val termsAccepted: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[KEY_TERMS_ACCEPTED] ?: false
+    }
+    
+    val isDarkTheme: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[KEY_DARK_THEME] ?: false
+    }
+    
+    val useDynamicColors: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[KEY_DYNAMIC_COLORS] ?: true
+    }
+    
+    val isOnboardingComplete: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[KEY_ONBOARDING_COMPLETE] ?: false
+    }
+    
+    val userLatitude: Flow<Double?> = context.dataStore.data.map { preferences ->
+        preferences[KEY_USER_LATITUDE]
+    }
+    
+    val userLongitude: Flow<Double?> = context.dataStore.data.map { preferences ->
+        preferences[KEY_USER_LONGITUDE]
+    }
+    
+    suspend fun setSelectedCity(city: String) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_SELECTED_CITY] = city
+        }
+    }
+    
+    suspend fun setTermsAccepted(accepted: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_TERMS_ACCEPTED] = accepted
+        }
+    }
+    
+    suspend fun setDarkTheme(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_DARK_THEME] = enabled
+        }
+    }
+    
+    suspend fun setDynamicColors(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_DYNAMIC_COLORS] = enabled
+        }
+    }
+    
+    suspend fun setOnboardingComplete(complete: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_ONBOARDING_COMPLETE] = complete
+        }
+    }
+    
+    suspend fun setUserLocation(latitude: Double, longitude: Double) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_USER_LATITUDE] = latitude
+            preferences[KEY_USER_LONGITUDE] = longitude
+        }
+    }
+}
+

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SalbaBida</string>
+
+    <string name="open_draw">Open</string>
+
+    <string name="close_draw">Close</string>
+
+</resources>

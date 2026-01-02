@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="primary_teal">#2b4389</color> <!-- Teal for headers, buttons, etc. -->
+    <color name="secondary_yellow">#FFC107</color> <!-- Golden Yellow for highlights -->
+    <color name="background_gray">#F5F5F5</color> <!-- Light Gray for backgrounds -->
+
+    <!-- Additional Shades (Optional) -->
+    <color name="primary_teal_light">#4DB6AC</color> <!-- Lighter teal shade for hover effects -->
+    <color name="secondary_yellow_dark">#FFA000</color> <!-- Darker yellow for pressed state -->
+    <color name="text_gray">#757575</color> <!-- Neutral gray for text -->
+
+    <!-- Text Colors -->
+    <color name="text_primary">#000000</color> <!-- Primary black for readable text -->
+    <color name="text_secondary">#757575</color> <!-- Secondary gray text -->
+    <color name="white">#Fff</color>
+
+    <!-- Accent Colors -->
+    <color name="accent_color">#E91E63</color> <!-- Optional accent (e.g., error or special elements) -->
+</resources>
