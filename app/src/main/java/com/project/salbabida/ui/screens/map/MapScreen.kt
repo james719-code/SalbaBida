@@ -3,7 +3,6 @@ package com.project.salbabida.ui.screens.map
 import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -36,6 +35,7 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -98,10 +98,7 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-// Default coordinates (Camarines Sur) - used as fallback
 private val defaultCoordinates = Pair(13.6252, 123.1826)
-
-// Distance threshold for showing markers (in km)
 private const val MARKER_VISIBILITY_RADIUS_KM = 50.0
 
 data class EvacuationCenter(
@@ -142,10 +139,9 @@ fun MapScreen(modifier: Modifier = Modifier) {
         addAll(MarkerCategory.entries) 
     } }
     
-    // Extended FAB state
     var showExtendedFab by remember { mutableStateOf(false) }
+    var showSetWeatherLocationDialog by remember { mutableStateOf(false) }
     
-    // City coordinates for map centering - using selected city or default (Camarines Sur)
     val selectedCityName by userPreferences.selectedCity.collectAsState(initial = null)
     val selectedCity = remember(selectedCityName) {
         selectedCityName?.let { PhilippineCities.findByName(it) } ?: PhilippineCities.getDefault()
@@ -261,8 +257,6 @@ fun MapScreen(modifier: Modifier = Modifier) {
     val currentHomeLocation = homeLocation
     
     Box(modifier = modifier) {
-        // OSMDroid Map
-        // OSMDroid Map
         AndroidView(
             factory = { ctx ->
                 MapView(ctx).apply {
@@ -287,19 +281,11 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 }
             },
             update = { map ->
-                // LOGGING: Start of update cycle
-                Log.d("MapDebug", "Updating map overlays. Clearing previous overlays.")
-
-                // Keep the first overlay (TilesOverlay) and clear the rest
                 val overlaysToKeep = map.overlays.filterIsInstance<org.osmdroid.views.overlay.TilesOverlay>()
                 map.overlays.clear()
                 map.overlays.addAll(overlaysToKeep)
 
-                // Add evacuation center markers
                 evacuationCenters.forEach { center ->
-                    // LOGGING: Adding specific evacuation center
-                    Log.d("MapDebug", "Adding Evacuation Center: ${center.name} at [${center.latitude}, ${center.longitude}]")
-
                     val marker = Marker(map).apply {
                         position = GeoPoint(center.latitude, center.longitude)
                         title = center.name
@@ -310,12 +296,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     map.overlays.add(marker)
                 }
 
-                // Add offline markers (filtered)
-                // Note: We use the markersToDisplay list which is filtered outside to ensure recomposition
                 markersToDisplay.forEach { offlineMarker ->
-                    // LOGGING: Adding user saved marker
-                    Log.d("MapDebug", "Adding Marker [${offlineMarker.category}]: ${offlineMarker.name} at [${offlineMarker.latitude}, ${offlineMarker.longitude}]")
-
                     val mapMarker = Marker(map).apply {
                         position = GeoPoint(offlineMarker.latitude, offlineMarker.longitude)
                         title = offlineMarker.name
@@ -333,11 +314,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     map.overlays.add(mapMarker)
                 }
 
-                // Add home location marker
                 currentHomeLocation?.let { home ->
-                    // LOGGING: Adding home location
-                    Log.d("MapDebug", "Adding Home Location: ${home.name} at [${home.latitude}, ${home.longitude}]")
-
                     val homeMarker = Marker(map).apply {
                         position = GeoPoint(home.latitude, home.longitude)
                         title = home.name
@@ -348,15 +325,11 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     map.overlays.add(homeMarker)
                 }
 
-                // Handle tap for location selection
                 if (isSelectingLocation) {
                     map.setOnTouchListener { _, event ->
                         if (event.action == android.view.MotionEvent.ACTION_UP) {
                             val projection = map.projection
                             val geoPoint = projection.fromPixels(event.x.toInt(), event.y.toInt()) as GeoPoint
-
-                            // LOGGING: User tapped on map
-                            Log.d("MapDebug", "User selected point: [${geoPoint.latitude}, ${geoPoint.longitude}] for mode: $selectionMode")
 
                             selectedPoint = geoPoint
                             isSelectingLocation = false
@@ -372,7 +345,6 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     map.setOnTouchListener(null)
                 }
 
-                Log.d("MapDebug", "Total overlays after update: ${map.overlays.size}")
                 map.postInvalidate()
             },
             modifier = Modifier.fillMaxSize()
@@ -723,6 +695,37 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         }
                     }
                     
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 3.dp
+                        ) {
+                            Text(
+                                text = "Set Weather Location",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        FloatingActionButton(
+                            onClick = {
+                                showSetWeatherLocationDialog = true
+                                showExtendedFab = false
+                            },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            elevation = FloatingActionButtonDefaults.elevation(
+                                defaultElevation = 6.dp
+                            )
+                        ) {
+                            Icon(Icons.Default.WbSunny, contentDescription = "Set Weather Location")
+                        }
+                    }
+                    
                     // Close button
                     SmallFloatingActionButton(
                         onClick = { showExtendedFab = false },
@@ -795,6 +798,51 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("No, just save", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+    
+    if (showSetWeatherLocationDialog) {
+        AlertDialog(
+            onDismissRequest = { showSetWeatherLocationDialog = false },
+            title = { 
+                Text(
+                    "Set Weather Location",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                ) 
+            },
+            text = { 
+                Text(
+                    "Use the current map center as your weather location? Weather data will update to show conditions for this area.",
+                    style = MaterialTheme.typography.bodyLarge
+                ) 
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            userPreferences.setWeatherLocation(
+                                currentMapCenter.first,
+                                currentMapCenter.second,
+                                selectedCity.name
+                            )
+                            showSetWeatherLocationDialog = false
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Set Location", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showSetWeatherLocationDialog = false },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Cancel", fontWeight = FontWeight.SemiBold)
                 }
             },
             shape = RoundedCornerShape(24.dp)

@@ -1,5 +1,11 @@
 package com.project.salbabida.ui.screens.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,13 +17,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +45,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -59,31 +69,48 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var isLoading by remember { mutableStateOf(true) }
     var isRefreshing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    var selectedCity by remember { mutableStateOf("") }
+    var locationName by remember { mutableStateOf("") }
     
     val scope = rememberCoroutineScope()
     val app = SalbaBidaApplication.getInstance()
     val weatherDao = app.database.weatherCacheDao()
     val preferences = app.userPreferences
     
+    val weatherLat by preferences.weatherLatitude.collectAsState(initial = null)
+    val weatherLon by preferences.weatherLongitude.collectAsState(initial = null)
+    val savedLocationName by preferences.weatherLocationName.collectAsState(initial = null)
+    
     suspend fun fetchWeather(forceRefresh: Boolean = false) {
         try {
+            val lat = weatherLat
+            val lon = weatherLon
             val city = preferences.selectedCity.first() ?: "Sorsogon City"
-            selectedCity = city
             
-            // Check cache first
-            val cached = weatherDao.getWeatherForCity(city)
+            val cacheKey = if (lat != null && lon != null) {
+                "${lat.toInt()}_${lon.toInt()}"
+            } else {
+                city
+            }
+            
+            locationName = savedLocationName ?: city
+            
+            val cached = weatherDao.getWeatherForCity(cacheKey)
             if (cached != null && !cached.isExpired() && !forceRefresh) {
                 weatherData = cached
                 isLoading = false
                 return
             }
             
-            // Fetch from API
-            val response = RetrofitClient.weatherService.getCurrentWeather(city, API_KEY)
+            val response = if (lat != null && lon != null) {
+                RetrofitClient.weatherService.getWeatherByCoordinates(lat, lon, API_KEY)
+            } else {
+                RetrofitClient.weatherService.getCurrentWeather(city, API_KEY)
+            }
+            
+            locationName = response.name
             
             val newCache = WeatherCache(
-                city = city,
+                city = cacheKey,
                 temperature = response.main?.temp ?: 0.0,
                 feelsLike = response.main?.feelsLike ?: 0.0,
                 humidity = response.main?.humidity ?: 0,
@@ -103,8 +130,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             error = null
         } catch (e: Exception) {
             error = e.message ?: "Failed to fetch weather"
-            // Try to show cached data even if it's expired
-            val cached = weatherDao.getWeatherForCity(selectedCity)
+            val city = preferences.selectedCity.first() ?: "Sorsogon City"
+            val cached = weatherDao.getWeatherForCity(city)
             if (cached != null) {
                 weatherData = cached
             }
@@ -114,8 +141,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
     
-    LaunchedEffect(Unit) {
-        fetchWeather()
+    LaunchedEffect(weatherLat, weatherLon) {
+        fetchWeather(forceRefresh = weatherLat != null && weatherLon != null)
     }
     
     PullToRefreshBox(
@@ -161,12 +188,16 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
-                        WeatherHeaderCard(weather, selectedCity)
+                        WeatherHeaderCard(weather, locationName)
+                    }
+                    
+                    item {
+                        FloodAlertCard(weather)
                     }
                     
                     item {
                         Text(
-                            text = "Weather Details",
+                            text = "Details",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -180,7 +211,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             WeatherDetailCard(
                                 icon = Icons.Default.Thermostat,
                                 title = "Feels Like",
-                                value = String.format("%.1f°C", weather.feelsLike),
+                                value = String.format("%.1f", weather.feelsLike) + "\u00B0C",
                                 modifier = Modifier.weight(1f)
                             )
                             WeatherDetailCard(
@@ -199,13 +230,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         ) {
                             WeatherDetailCard(
                                 icon = Icons.Default.Air,
-                                title = "Wind Speed",
-                                value = String.format("%.1f m/s", weather.windSpeed),
+                                title = "Wind",
+                                value = String.format("%.1f", weather.windSpeed) + " m/s",
                                 modifier = Modifier.weight(1f)
                             )
                             WeatherDetailCard(
                                 icon = Icons.Default.Cloud,
-                                title = "Cloudiness",
+                                title = "Clouds",
                                 value = "${weather.cloudiness}%",
                                 modifier = Modifier.weight(1f)
                             )
@@ -233,9 +264,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     }
                     
                     item {
-                        val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+                        val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
                         Text(
-                            text = "Last updated: ${dateFormat.format(Date(weather.lastUpdated))}",
+                            text = "Updated: ${dateFormat.format(Date(weather.lastUpdated))}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -247,9 +278,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun WeatherHeaderCard(weather: WeatherCache, city: String) {
+private fun WeatherHeaderCard(weather: WeatherCache, location: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
@@ -259,8 +291,9 @@ private fun WeatherHeaderCard(weather: WeatherCache, city: String) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = city,
+                text = location,
                 style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
@@ -270,7 +303,7 @@ private fun WeatherHeaderCard(weather: WeatherCache, city: String) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = String.format("%.1f°C", weather.temperature),
+                text = String.format("%.0f", weather.temperature) + "\u00B0",
                 style = MaterialTheme.typography.displayLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -285,13 +318,81 @@ private fun WeatherHeaderCard(weather: WeatherCache, city: String) {
 }
 
 @Composable
+private fun FloodAlertCard(weather: WeatherCache) {
+    val description = weather.description.lowercase()
+    val isRainy = description.contains("rain") || 
+                  description.contains("storm") || 
+                  description.contains("thunderstorm") ||
+                  description.contains("drizzle") ||
+                  description.contains("shower")
+    
+    val isHighRisk = weather.humidity > 85 && weather.cloudiness > 80
+    val showAlert = isRainy || isHighRisk
+    
+    val alertMessage = when {
+        description.contains("thunderstorm") || description.contains("storm") -> 
+            "Severe weather alert: Possible flooding in low-lying areas. Seek shelter immediately."
+        description.contains("heavy rain") || (isRainy && weather.humidity > 90) ->
+            "Heavy rain detected: High risk of flash floods. Avoid flood-prone areas."
+        isRainy ->
+            "Rain expected: Be aware of possible flooding in flood-prone areas."
+        isHighRisk ->
+            "High humidity and cloud cover: Rain likely. Stay alert for potential flooding."
+        else -> ""
+    }
+    
+    AnimatedVisibility(
+        visible = showAlert,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(28.dp)
+                )
+                Column {
+                    Text(
+                        text = "Flood Warning",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = alertMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun WeatherDetailCard(
     icon: ImageVector,
     title: String,
     value: String,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp)
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -300,7 +401,7 @@ private fun WeatherDetailCard(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
