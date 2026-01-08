@@ -6,12 +6,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.project.salbabida.ui.screens.SplashScreen
-import com.project.salbabida.ui.screens.about.AboutScreen
+import com.project.salbabida.ui.screens.main.MainScreen
 import com.project.salbabida.ui.screens.auth.LocationSelectionScreen
 import com.project.salbabida.ui.screens.auth.LoginScreen
 import com.project.salbabida.ui.screens.auth.SignUpScreen
-import com.project.salbabida.ui.screens.main.MainScreen
-import com.project.salbabida.ui.screens.settings.SettingsScreen
 
 @Composable
 fun AppNavigation(
@@ -82,25 +80,11 @@ fun AppNavigation(
         
         composable("main") {
             MainScreen(
-                onNavigateToSettings = { navController.navigate("settings") },
-                onNavigateToAbout = { navController.navigate("about") },
                 onLogout = {
                     navController.navigate("login") {
                         popUpTo("main") { inclusive = true }
                     }
                 }
-            )
-        }
-        
-        composable("settings") {
-            SettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-        
-        composable("about") {
-            AboutScreen(
-                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

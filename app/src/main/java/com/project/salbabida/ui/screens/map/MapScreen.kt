@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -77,7 +78,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.google.firebase.firestore.FirebaseFirestore
@@ -159,14 +162,22 @@ fun MapScreen(modifier: Modifier = Modifier) {
         shouldRecenterMap = true
     }
     
+    var isFirstLoad by remember { mutableStateOf(true) }
+    
     // Recenter map when location changes
-    LaunchedEffect(shouldRecenterMap) {
-        if (shouldRecenterMap) {
-            mapView?.controller?.animateTo(
-                GeoPoint(cityCenter.first, cityCenter.second),
-                12.0,
-                1000L
-            )
+    LaunchedEffect(shouldRecenterMap, mapView) {
+        if (shouldRecenterMap && mapView != null) {
+            if (isFirstLoad) {
+                mapView?.controller?.setCenter(GeoPoint(cityCenter.first, cityCenter.second))
+                mapView?.controller?.setZoom(12.0)
+                isFirstLoad = false
+            } else {
+                mapView?.controller?.animateTo(
+                    GeoPoint(cityCenter.first, cityCenter.second),
+                    12.0,
+                    1000L
+                )
+            }
             shouldRecenterMap = false
         }
     }
@@ -264,7 +275,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     setBuiltInZoomControls(false)
                     setMultiTouchControls(true)
 
-                    controller.setZoom(15.0)
+                    controller.setZoom(12.0)
                     controller.setCenter(GeoPoint(cityCenter.first, cityCenter.second))
                     
                     // Add map listener to track current center
@@ -481,77 +492,85 @@ fun MapScreen(modifier: Modifier = Modifier) {
             }
         }
         
-        // Nearest evacuation center card
+        // Nearest evacuation center card (Now at Top for better organization)
         AnimatedVisibility(
             visible = nearestCenter != null && !isSelectingLocation && !showFilters,
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),
             modifier = Modifier
-                .align(Alignment.BottomStart)
+                .align(Alignment.TopCenter)
                 .padding(16.dp)
-                .padding(bottom = 80.dp)
+                .zIndex(1f) // Ensure it stays above other overlays
         ) {
             nearestCenter?.let { center ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(0.8f),
+                    modifier = Modifier.fillMaxWidth(0.95f),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
                 ) {
-                    Box {
-                        // Gradient overlay
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .background(
-                                    Brush.horizontalGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.secondaryContainer,
-                                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
-                                        )
-                                    )
-                                )
-                        )
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(44.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Icon(
+                                Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(10.dp)
+                            )
+                        }
                         
-                        Column(modifier = Modifier.padding(20.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.LocationOn,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = "Nearest Evacuation Center",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "NEAREST SHELTER",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 1.sp
+                            )
                             
                             Text(
                                 text = center.name,
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                maxLines = 1
                             )
                             
                             center.distance?.let {
-                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = String.format("%.2f km away", it),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
+                        }
+                        
+                        IconButton(
+                            onClick = {
+                                mapView?.controller?.animateTo(GeoPoint(center.latitude, center.longitude), 15.0, 1000L)
+                            },
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                .size(40.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.MyLocation,
+                                contentDescription = "Locate",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }

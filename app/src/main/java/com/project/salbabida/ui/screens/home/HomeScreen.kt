@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,11 +17,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.Visibility
@@ -33,6 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -51,6 +55,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.project.salbabida.SalbaBidaApplication
 import com.project.salbabida.data.api.RetrofitClient
 import com.project.salbabida.data.database.entities.WeatherCache
@@ -142,7 +147,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
     
     LaunchedEffect(weatherLat, weatherLon) {
-        fetchWeather(forceRefresh = weatherLat != null && weatherLon != null)
+        // Initial load or location change should NOT force refresh if cache is valid
+        fetchWeather(forceRefresh = false)
     }
     
     PullToRefreshBox(
@@ -204,61 +210,47 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     }
                     
                     item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Weather Details",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             WeatherDetailCard(
                                 icon = Icons.Default.Thermostat,
                                 title = "Feels Like",
-                                value = String.format("%.1f", weather.feelsLike) + "\u00B0C",
-                                modifier = Modifier.weight(1f)
+                                value = String.format("%.1f", weather.feelsLike) + "\u00B0C"
                             )
                             WeatherDetailCard(
                                 icon = Icons.Default.WaterDrop,
                                 title = "Humidity",
-                                value = "${weather.humidity}%",
-                                modifier = Modifier.weight(1f)
+                                value = "${weather.humidity}%"
                             )
-                        }
-                    }
-                    
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
                             WeatherDetailCard(
                                 icon = Icons.Default.Air,
                                 title = "Wind",
-                                value = String.format("%.1f", weather.windSpeed) + " m/s",
-                                modifier = Modifier.weight(1f)
+                                value = String.format("%.1f", weather.windSpeed) + " m/s"
                             )
                             WeatherDetailCard(
                                 icon = Icons.Default.Cloud,
                                 title = "Clouds",
-                                value = "${weather.cloudiness}%",
-                                modifier = Modifier.weight(1f)
+                                value = "${weather.cloudiness}%"
                             )
-                        }
-                    }
-                    
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
                             WeatherDetailCard(
                                 icon = Icons.Default.Visibility,
                                 title = "Visibility",
-                                value = "${weather.visibility / 1000} km",
-                                modifier = Modifier.weight(1f)
+                                value = "${weather.visibility / 1000} km"
                             )
                             WeatherDetailCard(
                                 icon = Icons.Default.Thermostat,
                                 title = "Pressure",
-                                value = "${weather.pressure} hPa",
-                                modifier = Modifier.weight(1f)
+                                value = "${weather.pressure} hPa"
                             )
                         }
                     }
@@ -279,40 +271,80 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun WeatherHeaderCard(weather: WeatherCache, location: String) {
+    val gradientColors = when {
+        weather.description.contains("clear") -> listOf(Color(0xFFFDC830), Color(0xFFF37335))
+        weather.description.contains("rain") || weather.description.contains("drizzle") -> listOf(Color(0xFF4B79A1), Color(0xFF283E51))
+        weather.description.contains("cloud") -> listOf(Color(0xFFbdc3c7), Color(0xFF2c3e50))
+        weather.description.contains("storm") -> listOf(Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364))
+        else -> listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f))
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        shape = RoundedCornerShape(32.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .background(Brush.linearGradient(gradientColors))
+                .padding(32.dp)
         ) {
-            Text(
-                text = location,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Text(
-                text = weather.country,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = String.format("%.0f", weather.temperature) + "\u00B0",
-                style = MaterialTheme.typography.displayLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Text(
-                text = weather.description.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = location.uppercase(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.9f),
+                        letterSpacing = 1.5.sp
+                    )
+                }
+                
+                Text(
+                    text = weather.country,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text(
+                    text = String.format("%.0f", weather.temperature) + "\u00B0",
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 80.sp,
+                        lineHeight = 80.sp
+                    ),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Surface(
+                    color = Color.White.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Text(
+                        text = weather.description.replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -348,10 +380,11 @@ private fun FloodAlertCard(weather: WeatherCache) {
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.errorContainer
-            )
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.1f))
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -391,29 +424,49 @@ private fun WeatherDetailCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(16.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

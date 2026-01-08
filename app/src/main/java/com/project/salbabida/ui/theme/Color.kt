@@ -2,53 +2,58 @@ package com.project.salbabida.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary - Deep Blue/Teal for trust and safety
-val Primary = Color(0xFF1565C0)
-val PrimaryLight = Color(0xFF5E92F3)
-val PrimaryDark = Color(0xFF003C8F)
+/**
+ * SALBA-bida Premium Color Palette
+ * Refined for high-contrast legibility and reduced eye strain.
+ */
+
+// Primary - Vibrant Indigo (Technology & Safety)
+val Primary = Color(0xFF4F46E5)
+val PrimaryLight = Color(0xFF818CF8)
+val PrimaryDark = Color(0xFF3730A3)
 val OnPrimary = Color.White
 
-// Secondary - Amber/Yellow for alerts and warnings
-val Secondary = Color(0xFFFFA000)
-val SecondaryLight = Color(0xFFFFD149)
-val SecondaryDark = Color(0xFFC67100)
-val OnSecondary = Color.Black
+// Secondary - High-Clarity Amber (Warning & Guidance)
+val Secondary = Color(0xFFF59E0B)
+val SecondaryLight = Color(0xFFFBBF24)
+val SecondaryDark = Color(0xFFB45309)
+val OnSecondary = Color.White
 
-// Tertiary - Teal for success and positive actions
-val Tertiary = Color(0xFF00897B)
-val TertiaryLight = Color(0xFF4EBAAA)
-val TertiaryDark = Color(0xFF005B4F)
+// Tertiary - Emerald (Success)
+val Tertiary = Color(0xFF10B981)
+val TertiaryLight = Color(0xFF34D399)
+val TertiaryDark = Color(0xFF065F46)
 val OnTertiary = Color.White
 
-// Error - Red for emergencies and critical alerts
-val Error = Color(0xFFD32F2F)
-val ErrorLight = Color(0xFFFF6659)
-val ErrorDark = Color(0xFF9A0007)
+// Error - Rose
+val Error = Color(0xFFE11D48)
+val ErrorLight = Color(0xFFFB7185)
+val ErrorDark = Color(0xFF9F1239)
 val OnError = Color.White
 
-// Background colors
-val BackgroundLight = Color(0xFFFAFAFA)
-val BackgroundDark = Color(0xFF121212)
+// Refined Neutral Backgrounds (Slate Tones for eye comfort)
+val BackgroundLight = Color(0xFFF8FAFC)
+val BackgroundDark = Color(0xFF0F172A) // Not pure black, soft navy-slate
 val SurfaceLight = Color.White
-val SurfaceDark = Color(0xFF1E1E1E)
+val SurfaceDark = Color(0xFF1E293B) // Lighter than background for depth
 
-// Surface variants
-val SurfaceVariantLight = Color(0xFFE7E7E7)
-val SurfaceVariantDark = Color(0xFF2D2D2D)
+// Surface Variants
+val SurfaceVariantLight = Color(0xFFF1F5F9)
+val SurfaceVariantDark = Color(0xFF334155) // Distinct from surface
 
-// Text colors
-val OnBackgroundLight = Color(0xFF1C1B1F)
-val OnBackgroundDark = Color(0xFFE6E1E5)
-val OnSurfaceLight = Color(0xFF1C1B1F)
-val OnSurfaceDark = Color(0xFFE6E1E5)
+// Text Hues (High contrast white for dark mode)
+val OnBackgroundLight = Color(0xFF0F172A)
+val OnBackgroundDark = Color(0xFFF8FAFC)
+val OnSurfaceLight = Color(0xFF1E293B)
+val OnSurfaceDark = Color(0xFFFFFFFF) // Pure white for maximum clarity
 
-// Outline
-val OutlineLight = Color(0xFF79747E)
-val OutlineDark = Color(0xFF938F99)
+// Outline & Borders
+val OutlineLight = Color(0xFFE2E8F0)
+val OutlineDark = Color(0xFF475569)
 
-// Custom colors for flood-related features - Blue hues only
-val FloodWarning = Color(0xFF1565C0)      // Deep Blue - Flood zones
-val FloodSafe = Color(0xFF00BCD4)          // Cyan - Safe areas
-val EvacuationCenter = Color(0xFF2196F3)   // Blue - Evacuation centers
-val HomeMarker = Color(0xFF3F51B5)         // Indigo - Home marker
-val ResourceCenter = Color(0xFF03A9F4)     // Light Blue - Resource centers
+// Domain Specific Hues
+val FloodWarning = Error
+val FloodSafe = Tertiary
+val EvacuationCenter = Color(0xFF3B82F6) // Bright Blue
+val HomeMarker = Color(0xFF8B5CF6) // Bright Violet
+val ResourceCenter = Color(0xFFF59E0B) // Amber
