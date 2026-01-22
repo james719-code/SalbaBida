@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.LayersClear
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider as Divider
@@ -40,6 +41,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -96,6 +98,25 @@ fun SettingsScreen(
     var locationUpdateMessage by remember { mutableStateOf<String?>(null) }
     var hasPermission by remember { mutableStateOf(false) }
     
+    var showManualAddressDialog by remember { mutableStateOf(false) }
+    var barangay by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var province by remember { mutableStateOf("") }
+    var manualAddressError by remember { mutableStateOf<String?>(null) }
+    
+    // Load existing address if any
+    val savedBarangay by preferences.userBarangay.collectAsState(initial = "")
+    val savedCity by preferences.userCity.collectAsState(initial = "")
+    val savedProvince by preferences.userProvince.collectAsState(initial = "")
+    
+    LaunchedEffect(showManualAddressDialog) {
+        if (showManualAddressDialog) {
+            barangay = savedBarangay ?: ""
+            city = savedCity ?: ""
+            province = savedProvince ?: ""
+        }
+    }
+    
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -134,6 +155,37 @@ fun SettingsScreen(
                 }
             } catch (e: Exception) {
                 locationUpdateMessage = "Error: ${e.message}"
+            } finally {
+                isUpdatingLocation = false
+            }
+        }
+    }
+
+    fun updateManualAddress() {
+        if (barangay.isBlank() || city.isBlank() || province.isBlank()) {
+            manualAddressError = "All fields are required"
+            return
+        }
+        
+        isUpdatingLocation = true
+        scope.launch {
+            try {
+                val fullAddress = "$barangay, $city, $province, Philippines"
+                val geocoder = android.location.Geocoder(context)
+                @Suppress("DEPRECATION")
+                val addresses = geocoder.getFromLocationName(fullAddress, 1)
+                
+                if (!addresses.isNullOrEmpty()) {
+                    val address = addresses[0]
+                    preferences.setUserLocation(address.latitude, address.longitude)
+                }
+                
+                preferences.setUserAddress(barangay, city, province)
+                showManualAddressDialog = false
+            } catch (e: Exception) {
+                // Save even if geocoding fails
+                preferences.setUserAddress(barangay, city, province)
+                showManualAddressDialog = false
             } finally {
                 isUpdatingLocation = false
             }
@@ -218,6 +270,15 @@ fun SettingsScreen(
                         }
                     }
                 )
+                
+                Divider(modifier = Modifier.padding(horizontal = 16.dp), color = outlineColor.copy(alpha = 0.05f))
+                
+                SettingsItem(
+                    title = "Set Address Manually",
+                    description = "Input your Barangay, City, and Province",
+                    icon = Icons.Default.Map,
+                    onClick = { showManualAddressDialog = true }
+                )
             }
             
             // Appearance Section
@@ -282,6 +343,62 @@ fun SettingsScreen(
             
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+    
+    if (showManualAddressDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isUpdatingLocation) showManualAddressDialog = false },
+            title = { Text("Manual Address") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    androidx.compose.material3.OutlinedTextField(
+                        value = barangay,
+                        onValueChange = { barangay = it; manualAddressError = null },
+                        label = { Text("Barangay") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isUpdatingLocation
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = city,
+                        onValueChange = { city = it; manualAddressError = null },
+                        label = { Text("City/Municipality") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isUpdatingLocation
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = province,
+                        onValueChange = { province = it; manualAddressError = null },
+                        label = { Text("Province") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isUpdatingLocation
+                    )
+                    
+                    if (manualAddressError != null) {
+                        Text(manualAddressError!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                    
+                    if (isUpdatingLocation) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { updateManualAddress() },
+                    enabled = !isUpdatingLocation
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showManualAddressDialog = false },
+                    enabled = !isUpdatingLocation
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
     
     if (showUpdateLocationDialog) {

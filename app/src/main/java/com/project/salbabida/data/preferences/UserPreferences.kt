@@ -23,6 +23,9 @@ class UserPreferences(private val context: Context) {
         private val KEY_ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         private val KEY_USER_LATITUDE = doublePreferencesKey("user_latitude")
         private val KEY_USER_LONGITUDE = doublePreferencesKey("user_longitude")
+        private val KEY_USER_BARANGAY = stringPreferencesKey("user_barangay")
+        private val KEY_USER_CITY = stringPreferencesKey("user_city")
+        private val KEY_USER_PROVINCE = stringPreferencesKey("user_province")
         private val KEY_WEATHER_LATITUDE = doublePreferencesKey("weather_latitude")
         private val KEY_WEATHER_LONGITUDE = doublePreferencesKey("weather_longitude")
         private val KEY_WEATHER_LOCATION_NAME = stringPreferencesKey("weather_location_name")
@@ -54,6 +57,18 @@ class UserPreferences(private val context: Context) {
     
     val userLongitude: Flow<Double?> = context.dataStore.data.map { preferences ->
         preferences[KEY_USER_LONGITUDE]
+    }
+
+    val userBarangay: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[KEY_USER_BARANGAY]
+    }
+
+    val userCity: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[KEY_USER_CITY]
+    }
+
+    val userProvince: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[KEY_USER_PROVINCE]
     }
     
     val weatherLatitude: Flow<Double?> = context.dataStore.data.map { preferences ->
@@ -102,6 +117,14 @@ class UserPreferences(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[KEY_USER_LATITUDE] = latitude
             preferences[KEY_USER_LONGITUDE] = longitude
+        }
+    }
+
+    suspend fun setUserAddress(barangay: String, city: String, province: String) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_USER_BARANGAY] = barangay
+            preferences[KEY_USER_CITY] = city
+            preferences[KEY_USER_PROVINCE] = province
         }
     }
     

@@ -7,7 +7,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.project.salbabida.ui.screens.SplashScreen
 import com.project.salbabida.ui.screens.main.MainScreen
-import com.project.salbabida.ui.screens.auth.LocationSelectionScreen
 import com.project.salbabida.ui.screens.auth.LoginScreen
 import com.project.salbabida.ui.screens.auth.SignUpScreen
 
@@ -32,11 +31,6 @@ fun AppNavigation(
                     navController.navigate("main") {
                         popUpTo("splash") { inclusive = true }
                     }
-                },
-                onNavigateToCitySelection = {
-                    navController.navigate("city_selection") {
-                        popUpTo("splash") { inclusive = true }
-                    }
                 }
             )
         }
@@ -45,7 +39,7 @@ fun AppNavigation(
             LoginScreen(
                 onNavigateToSignUp = { navController.navigate("signup") },
                 onLoginSuccess = {
-                    navController.navigate("city_selection") {
+                    navController.navigate("main") {
                         popUpTo("login") { inclusive = true }
                     }
                 },
@@ -61,18 +55,8 @@ fun AppNavigation(
             SignUpScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onSignUpSuccess = {
-                    navController.navigate("city_selection") {
-                        popUpTo("signup") { inclusive = true }
-                    }
-                }
-            )
-        }
-        
-        composable("city_selection") {
-            LocationSelectionScreen(
-                onLocationSelected = {
                     navController.navigate("main") {
-                        popUpTo("city_selection") { inclusive = true }
+                        popUpTo("signup") { inclusive = true }
                     }
                 }
             )

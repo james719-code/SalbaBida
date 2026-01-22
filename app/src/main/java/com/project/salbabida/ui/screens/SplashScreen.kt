@@ -34,17 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.project.salbabida.R
-import com.project.salbabida.SalbaBidaApplication
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 @Composable
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToMain: () -> Unit,
-    onNavigateToCitySelection: () -> Unit
+    onNavigateToMain: () -> Unit
 ) {
     val scale = remember { Animatable(0f) }
     val textAlpha = remember { Animatable(0f) }
@@ -83,12 +80,8 @@ fun SplashScreen(
         delay(2500) // Keep the splash screen visible for a moment
         
         val currentUser = FirebaseAuth.getInstance().currentUser
-        val preferences = SalbaBidaApplication.getInstance().userPreferences
-        val hasSelectedCity = preferences.selectedCity.first() != null
-        
         when {
             currentUser == null -> onNavigateToLogin()
-            !hasSelectedCity -> onNavigateToCitySelection()
             else -> onNavigateToMain()
         }
     }

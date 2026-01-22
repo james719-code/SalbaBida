@@ -15,6 +15,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -141,11 +142,18 @@ fun MapScreen(modifier: Modifier = Modifier) {
     val selectedCategories = remember { mutableStateListOf<MarkerCategory>().apply { 
         addAll(MarkerCategory.entries) 
     } }
+    var showOnlineShelters by remember { mutableStateOf(true) }
     
     var showExtendedFab by remember { mutableStateOf(false) }
     var showSetWeatherLocationDialog by remember { mutableStateOf(false) }
+    var showPurgeSheltersDialog by remember { mutableStateOf(false) }
     
     val selectedCityName by userPreferences.selectedCity.collectAsState(initial = null)
+    val userLat by userPreferences.userLatitude.collectAsState(initial = null)
+    val userLon by userPreferences.userLongitude.collectAsState(initial = null)
+    val userBarangay by userPreferences.userBarangay.collectAsState(initial = null)
+    val userCity by userPreferences.userCity.collectAsState(initial = null)
+    val userProvince by userPreferences.userProvince.collectAsState(initial = null)
     val selectedCity = remember(selectedCityName) {
         selectedCityName?.let { PhilippineCities.findByName(it) } ?: PhilippineCities.getDefault()
     }
@@ -155,9 +163,13 @@ fun MapScreen(modifier: Modifier = Modifier) {
     // Track current map center for proximity-based marker filtering
     var currentMapCenter by remember { mutableStateOf(Pair(selectedCity.latitude, selectedCity.longitude)) }
     
-    // Update city center when selected city changes
-    LaunchedEffect(selectedCity) {
-        cityCenter = Pair(selectedCity.latitude, selectedCity.longitude)
+    // Update center when selected city, user location, or home location changes
+    LaunchedEffect(selectedCity, userLat, userLon, homeLocation) {
+        cityCenter = when {
+            homeLocation != null -> Pair(homeLocation!!.latitude, homeLocation!!.longitude)
+            userLat != null && userLon != null -> Pair(userLat!!, userLon!!)
+            else -> Pair(selectedCity.latitude, selectedCity.longitude)
+        }
         currentMapCenter = cityCenter
         shouldRecenterMap = true
     }
@@ -169,12 +181,12 @@ fun MapScreen(modifier: Modifier = Modifier) {
         if (shouldRecenterMap && mapView != null) {
             if (isFirstLoad) {
                 mapView?.controller?.setCenter(GeoPoint(cityCenter.first, cityCenter.second))
-                mapView?.controller?.setZoom(12.0)
+                mapView?.controller?.setZoom(14.0)
                 isFirstLoad = false
             } else {
                 mapView?.controller?.animateTo(
                     GeoPoint(cityCenter.first, cityCenter.second),
-                    12.0,
+                    18.0,
                     1000L
                 )
             }
@@ -194,6 +206,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
             homeLocation = homeLocationDao.getHomeLocation()
         }
     }
+
     
     // Load offline markers
     LaunchedEffect(Unit) {
@@ -225,14 +238,18 @@ fun MapScreen(modifier: Modifier = Modifier) {
     
     // Calculate nearest center when home location or centers change
     // Includes both Firestore evacuation centers AND offline markers of type EVACUATION_CENTER
-    LaunchedEffect(homeLocation, evacuationCenters.size, offlineMarkers.size) {
+    LaunchedEffect(homeLocation, evacuationCenters.size, offlineMarkers.size, showOnlineShelters) {
         homeLocation?.let { home ->
-            // Get Firestore evacuation centers with distance
-            val firestoreCentersWithDistance = evacuationCenters.map { center ->
-                center.copy(distance = calculateDistance(
-                    home.latitude, home.longitude,
-                    center.latitude, center.longitude
-                ))
+            // Get Firestore evacuation centers with distance (optional)
+            val firestoreCentersWithDistance = if (showOnlineShelters) {
+                evacuationCenters.map { center ->
+                    center.copy(distance = calculateDistance(
+                        home.latitude, home.longitude,
+                        center.latitude, center.longitude
+                    ))
+                }
+            } else {
+                emptyList()
             }
             
             // Get offline markers that are evacuation centers and convert to EvacuationCenter
@@ -275,7 +292,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     setBuiltInZoomControls(false)
                     setMultiTouchControls(true)
 
-                    controller.setZoom(12.0)
+                    controller.setZoom(14.0)
                     controller.setCenter(GeoPoint(cityCenter.first, cityCenter.second))
                     
                     // Add map listener to track current center
@@ -296,15 +313,17 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 map.overlays.clear()
                 map.overlays.addAll(overlaysToKeep)
 
-                evacuationCenters.forEach { center ->
-                    val marker = Marker(map).apply {
-                        position = GeoPoint(center.latitude, center.longitude)
-                        title = center.name
-                        snippet = center.distance?.let { "Distance: ${String.format("%.2f", it)} km" } ?: ""
-                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                        icon = createMarkerIcon(context, MarkerCategory.EVACUATION_CENTER, false)
+                if (showOnlineShelters) {
+                    evacuationCenters.forEach { center ->
+                        val marker = Marker(map).apply {
+                            position = GeoPoint(center.latitude, center.longitude)
+                            title = center.name
+                            snippet = center.distance?.let { "Distance: ${String.format("%.2f", it)} km" } ?: ""
+                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                            icon = createMarkerIcon(context, MarkerCategory.EVACUATION_CENTER, false)
+                        }
+                        map.overlays.add(marker)
                     }
-                    map.overlays.add(marker)
                 }
 
                 markersToDisplay.forEach { offlineMarker ->
@@ -401,6 +420,29 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        FilterChip(
+                            selected = showOnlineShelters,
+                            onClick = { showOnlineShelters = !showOnlineShelters },
+                            label = {
+                                Text(
+                                    "Online Shelters",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            },
+                            leadingIcon = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        )
+
                         MarkerCategory.entries.forEach { category ->
                             val isSelected = selectedCategories.contains(category)
                             FilterChip(
@@ -432,6 +474,19 @@ fun MapScreen(modifier: Modifier = Modifier) {
                                 )
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = { showPurgeSheltersDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Purge Online Shelters")
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -504,7 +559,13 @@ fun MapScreen(modifier: Modifier = Modifier) {
         ) {
             nearestCenter?.let { center ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(0.95f),
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .clickable {
+                            mapView?.controller?.animateTo(
+                                GeoPoint(center.latitude, center.longitude)
+                            )
+                        },
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
@@ -609,7 +670,17 @@ fun MapScreen(modifier: Modifier = Modifier) {
             
             // Recenter button
             SmallFloatingActionButton(
-                onClick = { shouldRecenterMap = true },
+                onClick = {
+                    if (homeLocation != null) {
+                        mapView?.controller?.animateTo(
+                            GeoPoint(homeLocation!!.latitude, homeLocation!!.longitude),
+                            15.0,
+                            1000L
+                        )
+                    } else {
+                        shouldRecenterMap = true
+                    }
+                },
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 elevation = FloatingActionButtonDefaults.elevation(
@@ -618,6 +689,29 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 )
             ) {
                 Icon(Icons.Default.MyLocation, contentDescription = "Recenter map")
+            }
+
+            // Nearest shelter recenter button
+            if (nearestCenter != null) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        nearestCenter?.let { center ->
+                            mapView?.controller?.animateTo(
+                                GeoPoint(center.latitude, center.longitude),
+                                15.0,
+                                1000L
+                            )
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 6.dp,
+                        pressedElevation = 8.dp
+                    )
+                ) {
+                    Icon(Icons.Default.LocationOn, contentDescription = "Nearest shelter")
+                }
             }
             
             // Extended FAB for actions
@@ -824,6 +918,11 @@ fun MapScreen(modifier: Modifier = Modifier) {
     }
     
     if (showSetWeatherLocationDialog) {
+        val weatherLocationLabel = listOfNotNull(
+            userBarangay?.takeIf { it.isNotBlank() },
+            userCity?.takeIf { it.isNotBlank() },
+            userProvince?.takeIf { it.isNotBlank() }
+        ).joinToString(", ")
         AlertDialog(
             onDismissRequest = { showSetWeatherLocationDialog = false },
             title = { 
@@ -843,10 +942,15 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 Button(
                     onClick = {
                         scope.launch {
+                            val resolvedWeatherLabel = when {
+                                weatherLocationLabel.isNotBlank() -> weatherLocationLabel
+                                userLat != null && userLon != null -> "Current Location"
+                                else -> selectedCity.name
+                            }
                             userPreferences.setWeatherLocation(
                                 currentMapCenter.first,
                                 currentMapCenter.second,
-                                selectedCity.name
+                                resolvedWeatherLabel
                             )
                             showSetWeatherLocationDialog = false
                         }
@@ -859,6 +963,64 @@ fun MapScreen(modifier: Modifier = Modifier) {
             dismissButton = {
                 OutlinedButton(
                     onClick = { showSetWeatherLocationDialog = false },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Cancel", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
+    if (showPurgeSheltersDialog) {
+        AlertDialog(
+            onDismissRequest = { showPurgeSheltersDialog = false },
+            title = {
+                Text(
+                    "Purge Online Shelters",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    "This will permanently delete ALL online evacuation centers from the server. This cannot be undone.",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val snapshot = FirebaseFirestore.getInstance()
+                                    .collection("evacuation_centers")
+                                    .get()
+                                    .await()
+                                snapshot.documents.forEach { doc ->
+                                    doc.reference.delete().await()
+                                }
+                                evacuationCenters.clear()
+                                nearestCenter = null
+                            } catch (_: Exception) {
+                                // Ignore errors for now
+                            } finally {
+                                showPurgeSheltersDialog = false
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Purge", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showPurgeSheltersDialog = false },
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Cancel", fontWeight = FontWeight.SemiBold)
@@ -1330,19 +1492,19 @@ private fun EditMarkerBottomSheet(
 
 private fun getCategoryColor(category: MarkerCategory): Color {
     return when (category) {
-        MarkerCategory.EVACUATION_CENTER -> Color(0xFF2196F3)  // Blue
-        MarkerCategory.FLOOD_ZONE -> Color(0xFF1565C0)          // Deep Blue
-        MarkerCategory.SAFE_AREA -> Color(0xFF00BCD4)           // Cyan
-        MarkerCategory.RESOURCE_CENTER -> Color(0xFF03A9F4)     // Light Blue
+        MarkerCategory.EVACUATION_CENTER -> Color(0xFF1976D2)  // Blue (shelter)
+        MarkerCategory.FLOOD_ZONE -> Color(0xFFD32F2F)          // Red (danger)
+        MarkerCategory.SAFE_AREA -> Color(0xFF2E7D32)           // Green (safe)
+        MarkerCategory.RESOURCE_CENTER -> Color(0xFFF9A825)     // Amber (resources)
     }
 }
 
 private fun createMarkerIcon(context: Context, category: MarkerCategory, isSelected: Boolean): Drawable {
     val color = when (category) {
-        MarkerCategory.EVACUATION_CENTER -> android.graphics.Color.parseColor("#2196F3") // Blue
-        MarkerCategory.FLOOD_ZONE -> android.graphics.Color.parseColor("#1565C0")         // Deep Blue
-        MarkerCategory.SAFE_AREA -> android.graphics.Color.parseColor("#00BCD4")          // Cyan
-        MarkerCategory.RESOURCE_CENTER -> android.graphics.Color.parseColor("#03A9F4")    // Light Blue
+        MarkerCategory.EVACUATION_CENTER -> android.graphics.Color.parseColor("#1976D2") // Blue (shelter)
+        MarkerCategory.FLOOD_ZONE -> android.graphics.Color.parseColor("#D32F2F")         // Red (danger)
+        MarkerCategory.SAFE_AREA -> android.graphics.Color.parseColor("#2E7D32")          // Green (safe)
+        MarkerCategory.RESOURCE_CENTER -> android.graphics.Color.parseColor("#F9A825")    // Amber (resources)
     }
     return createPinDrawable(context, color, if (isSelected) 1.2f else 1f)
 }

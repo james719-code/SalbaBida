@@ -98,21 +98,36 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val weatherLat by preferences.weatherLatitude.collectAsState(initial = null)
     val weatherLon by preferences.weatherLongitude.collectAsState(initial = null)
     val savedLocationName by preferences.weatherLocationName.collectAsState(initial = null)
+    val userLat by preferences.userLatitude.collectAsState(initial = null)
+    val userLon by preferences.userLongitude.collectAsState(initial = null)
+    val userBarangay by preferences.userBarangay.collectAsState(initial = null)
+    val userCity by preferences.userCity.collectAsState(initial = null)
+    val userProvince by preferences.userProvince.collectAsState(initial = null)
     
     suspend fun fetchWeather(forceRefresh: Boolean = false) {
-            val lat = weatherLat
-            val lon = weatherLon
             val city = preferences.selectedCity.first() ?: "Sorsogon City"
-            
-            val cacheKey = if (lat != null && lon != null) {
-                "${lat.toInt()}_${lon.toInt()}"
+            val effectiveLat = weatherLat ?: userLat
+            val effectiveLon = weatherLon ?: userLon
+            val hasCoordinates = effectiveLat != null && effectiveLon != null
+            val userLocationLabel = listOfNotNull(
+                userBarangay?.takeIf { it.isNotBlank() },
+                userCity?.takeIf { it.isNotBlank() },
+                userProvince?.takeIf { it.isNotBlank() }
+            ).joinToString(", ")
+            val cacheKey = if (hasCoordinates) {
+                String.format(Locale.US, "%.4f_%.4f", effectiveLat!!, effectiveLon!!)
             } else {
                 city
             }
 
             try {
             
-            locationName = savedLocationName ?: city
+            locationName = when {
+                savedLocationName?.isNotBlank() == true -> savedLocationName!!
+                hasCoordinates && userLocationLabel.isNotBlank() -> userLocationLabel
+                hasCoordinates -> "Current Location"
+                else -> city
+            }
             
             val cached = weatherDao.getWeatherForCity(cacheKey)
             
@@ -127,13 +142,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 return
             }
             
-            val response = if (lat != null && lon != null) {
-                RetrofitClient.weatherService.getWeatherByCoordinates(lat, lon, API_KEY)
+            val response = if (hasCoordinates) {
+                RetrofitClient.weatherService.getWeatherByCoordinates(effectiveLat!!, effectiveLon!!, API_KEY)
             } else {
                 RetrofitClient.weatherService.getCurrentWeather(city, API_KEY)
             }
             
-            locationName = response.name
+            if (savedLocationName.isNullOrBlank() && (!hasCoordinates || userLocationLabel.isBlank())) {
+                locationName = response.name
+            }
             
             val newCache = WeatherCache(
                 city = cacheKey,
