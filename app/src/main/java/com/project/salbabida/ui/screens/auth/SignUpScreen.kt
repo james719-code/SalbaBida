@@ -276,6 +276,7 @@ fun SignUpScreen(
                 )
 
                 firestore.collection("users").document(userId).set(userData).await()
+                preferences.setUserRole("user")
                 preferences.setUserLocation(resolvedLocation.latitude, resolvedLocation.longitude)
                 if (resolvedLocation.barangay != null && resolvedLocation.city != null && resolvedLocation.province != null) {
                     preferences.setUserAddress(

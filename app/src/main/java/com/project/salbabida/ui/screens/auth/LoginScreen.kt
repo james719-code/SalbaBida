@@ -62,6 +62,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.project.salbabida.R
 import com.project.salbabida.SalbaBidaApplication
 import kotlinx.coroutines.flow.first
@@ -111,7 +112,20 @@ fun LoginScreen(
         isLoading = true
         scope.launch {
             try {
-                auth.signInWithEmailAndPassword(email, password).await()
+                val result = auth.signInWithEmailAndPassword(email, password).await()
+                val userId = result.user?.uid
+                
+                if (userId != null) {
+                    val userDoc = FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(userId)
+                        .get()
+                        .await()
+                    
+                    val role = userDoc.getString("role") ?: "user"
+                    preferences.setUserRole(role)
+                }
+
                 val hasCity = preferences.selectedCity.first() != null
                 if (hasCity) {
                     onNavigateToMain()

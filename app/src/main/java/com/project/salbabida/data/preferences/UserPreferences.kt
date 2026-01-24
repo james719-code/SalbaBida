@@ -29,6 +29,7 @@ class UserPreferences(private val context: Context) {
         private val KEY_WEATHER_LATITUDE = doublePreferencesKey("weather_latitude")
         private val KEY_WEATHER_LONGITUDE = doublePreferencesKey("weather_longitude")
         private val KEY_WEATHER_LOCATION_NAME = stringPreferencesKey("weather_location_name")
+        private val KEY_USER_ROLE = stringPreferencesKey("user_role")
     }
     
     val selectedCity: Flow<String?> = context.dataStore.data.map { preferences ->
@@ -82,6 +83,10 @@ class UserPreferences(private val context: Context) {
     val weatherLocationName: Flow<String?> = context.dataStore.data.map { preferences ->
         preferences[KEY_WEATHER_LOCATION_NAME]
     }
+
+    val userRole: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[KEY_USER_ROLE]
+    }
     
     suspend fun setSelectedCity(city: String) {
         context.dataStore.edit { preferences ->
@@ -133,6 +138,12 @@ class UserPreferences(private val context: Context) {
             preferences[KEY_WEATHER_LATITUDE] = latitude
             preferences[KEY_WEATHER_LONGITUDE] = longitude
             preferences[KEY_WEATHER_LOCATION_NAME] = locationName
+        }
+    }
+
+    suspend fun setUserRole(role: String) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_USER_ROLE] = role
         }
     }
 }

@@ -154,6 +154,8 @@ fun MapScreen(modifier: Modifier = Modifier) {
     val userBarangay by userPreferences.userBarangay.collectAsState(initial = null)
     val userCity by userPreferences.userCity.collectAsState(initial = null)
     val userProvince by userPreferences.userProvince.collectAsState(initial = null)
+    val userRole by userPreferences.userRole.collectAsState(initial = null)
+    
     val selectedCity = remember(selectedCityName) {
         selectedCityName?.let { PhilippineCities.findByName(it) } ?: PhilippineCities.getDefault()
     }
@@ -334,10 +336,12 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                         icon = createMarkerIcon(context, offlineMarker.category, false)
                         
-                        // Add click listener for edit/delete
+                        // Add click listener for edit/delete - only for admins
                         setOnMarkerClickListener { _, _ ->
-                            selectedMarkerForEdit = offlineMarker
-                            showEditMarkerSheet = true
+                            if (userRole == "admin") {
+                                selectedMarkerForEdit = offlineMarker
+                                showEditMarkerSheet = true
+                            }
                             true
                         }
                     }
@@ -476,17 +480,19 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    if (userRole == "admin") {
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                    Button(
-                        onClick = { showPurgeSheltersDialog = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Purge Online Shelters")
+                        Button(
+                            onClick = { showPurgeSheltersDialog = true },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Purge Online Shelters")
+                        }
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -775,36 +781,38 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         }
                     }
                     
-                    // Add Marker FAB
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surface,
-                            tonalElevation = 3.dp
+                    // Add Marker FAB - only for admins
+                    if (userRole == "admin") {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Add Marker",
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                        FloatingActionButton(
-                            onClick = {
-                                selectionMode = "marker"
-                                isSelectingLocation = true
-                                showExtendedFab = false
-                            },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            elevation = FloatingActionButtonDefaults.elevation(
-                                defaultElevation = 6.dp
-                            )
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "Add Marker")
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                tonalElevation = 3.dp
+                            ) {
+                                Text(
+                                    text = "Add Marker",
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            FloatingActionButton(
+                                onClick = {
+                                    selectionMode = "marker"
+                                    isSelectingLocation = true
+                                    showExtendedFab = false
+                                },
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                elevation = FloatingActionButtonDefaults.elevation(
+                                    defaultElevation = 6.dp
+                                )
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Add Marker")
+                            }
                         }
                     }
                     
