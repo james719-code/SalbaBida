@@ -79,131 +79,46 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private const val API_KEY = "276d3e172aefb4795f6f7d94069e9c2b"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    var weatherData by remember { mutableStateOf<WeatherCache?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    var isRefreshing by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var locationName by remember { mutableStateOf("") }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val app = remember { context.applicationContext as SalbaBidaApplication }
     
-    val scope = rememberCoroutineScope()
-    val app = SalbaBidaApplication.getInstance()
-    val weatherDao = app.database.weatherCacheDao()
-    val preferences = app.userPreferences
-    
-    val weatherLat by preferences.weatherLatitude.collectAsState(initial = null)
-    val weatherLon by preferences.weatherLongitude.collectAsState(initial = null)
-    val savedLocationName by preferences.weatherLocationName.collectAsState(initial = null)
-    val userLat by preferences.userLatitude.collectAsState(initial = null)
-    val userLon by preferences.userLongitude.collectAsState(initial = null)
-    val userBarangay by preferences.userBarangay.collectAsState(initial = null)
-    val userCity by preferences.userCity.collectAsState(initial = null)
-    val userProvince by preferences.userProvince.collectAsState(initial = null)
-    
-    suspend fun fetchWeather(forceRefresh: Boolean = false) {
-            val city = preferences.selectedCity.first() ?: "Sorsogon City"
-            val effectiveLat = weatherLat ?: userLat
-            val effectiveLon = weatherLon ?: userLon
-            val hasCoordinates = effectiveLat != null && effectiveLon != null
-            val userLocationLabel = listOfNotNull(
-                userBarangay?.takeIf { it.isNotBlank() },
-                userCity?.takeIf { it.isNotBlank() },
-                userProvince?.takeIf { it.isNotBlank() }
-            ).joinToString(", ")
-            val cacheKey = if (hasCoordinates) {
-                String.format(Locale.US, "%.4f_%.4f", effectiveLat!!, effectiveLon!!)
-            } else {
-                city
-            }
-
-            try {
-            
-            locationName = when {
-                savedLocationName?.isNotBlank() == true -> savedLocationName!!
-                hasCoordinates && userLocationLabel.isNotBlank() -> userLocationLabel
-                hasCoordinates -> "Current Location"
-                else -> city
-            }
-            
-            val cached = weatherDao.getWeatherForCity(cacheKey)
-            
-            // 1. Load cache immediately if available (even if expired or refreshing)
-            if (cached != null) {
-                weatherData = cached
-            }
-
-            // 2. If cache is valid and we don't need to force refresh, stop here.
-            if (cached != null && !cached.isExpired() && !forceRefresh) {
-                isLoading = false
-                return
-            }
-            
-            val response = if (hasCoordinates) {
-                RetrofitClient.weatherService.getWeatherByCoordinates(effectiveLat!!, effectiveLon!!, API_KEY)
-            } else {
-                RetrofitClient.weatherService.getCurrentWeather(city, API_KEY)
-            }
-            
-            if (savedLocationName.isNullOrBlank() && (!hasCoordinates || userLocationLabel.isBlank())) {
-                locationName = response.name
-            }
-            
-            val newCache = WeatherCache(
-                city = cacheKey,
-                temperature = response.main?.temp ?: 0.0,
-                feelsLike = response.main?.feelsLike ?: 0.0,
-                humidity = response.main?.humidity ?: 0,
-                pressure = response.main?.pressure ?: 0,
-                visibility = response.visibility,
-                windSpeed = response.wind?.speed ?: 0.0,
-                windDeg = response.wind?.deg ?: 0,
-                windGust = response.wind?.gust,
-                cloudiness = response.clouds?.all ?: 0,
-                country = response.sys?.country ?: "",
-                description = response.weather?.firstOrNull()?.description ?: "",
-                icon = response.weather?.firstOrNull()?.icon ?: ""
-            )
-            
-            weatherDao.insertWeather(newCache)
-            weatherData = newCache
-            error = null
-        } catch (e: Exception) {
-            error = e.message ?: "Failed to fetch weather"
-            // If we haven't loaded data yet (no cache at start), try one last time or keep error
-            if (weatherData == null) {
-                val cached = weatherDao.getWeatherForCity(cacheKey)
-                if (cached != null) {
-                    weatherData = cached
-                }
-            }
-        } finally {
-            isLoading = false
-            isRefreshing = false
-        }
+    val repository = remember {
+        com.project.salbabida.data.repository.WeatherRepository(
+            app.database.weatherCacheDao(),
+            RetrofitClient.weatherService,
+            com.project.salbabida.BuildConfig.OPENWEATHER_API_KEY
+        )
     }
     
-    LaunchedEffect(weatherLat, weatherLon) {
-        fetchWeather(forceRefresh = false)
+    val viewModel: HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = HomeViewModelFactory(repository, app.userPreferences)
+    )
+
+    val uiState by viewModel.uiState.collectAsState()
+    
+    val weatherData = uiState.weatherData
+    val isLoading = uiState.isLoading
+    val isRefreshing = uiState.isRefreshing
+    val error = uiState.error
+    val locationName = uiState.locationName
+    
+    LaunchedEffect(Unit) {
+        // Trigger generic updates if needed, though VM init handles first load
     }
     
     PullToRefreshBox(
         isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            scope.launch { fetchWeather(forceRefresh = true) }
-        },
+        onRefresh = { viewModel.refresh() },
         modifier = modifier
     ) {
         if (isLoading && weatherData == null) {
             WeatherLoadingSkeleton()
         } else if (weatherData == null && error != null) {
             ErrorState(error = error ?: "Unknown error") {
-                isLoading = true
-                scope.launch { fetchWeather(forceRefresh = true) }
+                viewModel.refresh()
             }
         } else {
             weatherData?.let { weather ->

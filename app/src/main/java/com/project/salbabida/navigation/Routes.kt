@@ -13,4 +13,6 @@ sealed class BottomNavRoute(val route: String) {
     data object Home : BottomNavRoute("home")
     data object Map : BottomNavRoute("map")
     data object Preparedness : BottomNavRoute("preparedness")
+    data object Safety : BottomNavRoute("safety")
+    data object More : BottomNavRoute("more")
 }
