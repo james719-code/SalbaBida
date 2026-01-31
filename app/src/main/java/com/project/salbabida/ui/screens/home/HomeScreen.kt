@@ -78,6 +78,8 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.project.salbabida.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,11 +88,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val app = remember { context.applicationContext as SalbaBidaApplication }
     
     val repository = remember {
-        com.project.salbabida.data.repository.WeatherRepository(
-            app.database.weatherCacheDao(),
-            RetrofitClient.weatherService,
-            com.project.salbabida.BuildConfig.OPENWEATHER_API_KEY
-        )
+        app.container.weatherRepository
     }
     
     val viewModel: HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
@@ -143,7 +141,7 @@ fun ErrorState(error: String, onRetry: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Unable to load weather",
+            text = stringResource(R.string.weather_loading_error),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -162,21 +160,28 @@ fun ErrorState(error: String, onRetry: () -> Unit) {
                 .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
                 .padding(4.dp)
         ) {
-            Icon(Icons.Default.Refresh, contentDescription = "Retry", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.weather_retry), tint = MaterialTheme.colorScheme.onPrimaryContainer)
         }
     }
 }
 
 @Composable
 fun WeatherContent(weather: WeatherCache, locationName: String) {
-    val detailItems = remember(weather) {
+    val feelsLikeLabel = stringResource(R.string.weather_feels_like)
+    val humidityLabel = stringResource(R.string.weather_humidity)
+    val windLabel = stringResource(R.string.weather_wind)
+    val cloudsLabel = stringResource(R.string.weather_clouds)
+    val visibilityLabel = stringResource(R.string.weather_visibility)
+    val pressureLabel = stringResource(R.string.weather_pressure)
+
+    val detailItems = remember(weather, feelsLikeLabel, humidityLabel, windLabel, cloudsLabel, visibilityLabel, pressureLabel) {
         listOf(
-            WeatherDetailItem(Icons.Default.Thermostat, "Feels Like", String.format("%.1f", weather.feelsLike) + "°C"),
-            WeatherDetailItem(Icons.Default.WaterDrop, "Humidity", "${weather.humidity}%"),
-            WeatherDetailItem(Icons.Default.Air, "Wind", String.format("%.1f", weather.windSpeed) + " m/s"),
-            WeatherDetailItem(Icons.Default.Cloud, "Clouds", "${weather.cloudiness}%"),
-            WeatherDetailItem(Icons.Default.Visibility, "Visibility", "${weather.visibility / 1000} km"),
-            WeatherDetailItem(Icons.Default.Thermostat, "Pressure", "${weather.pressure} hPa")
+            WeatherDetailItem(Icons.Default.Thermostat, feelsLikeLabel, String.format("%.1f", weather.feelsLike) + "°C"),
+            WeatherDetailItem(Icons.Default.WaterDrop, humidityLabel, "${weather.humidity}%"),
+            WeatherDetailItem(Icons.Default.Air, windLabel, String.format("%.1f", weather.windSpeed) + " m/s"),
+            WeatherDetailItem(Icons.Default.Cloud, cloudsLabel, "${weather.cloudiness}%"),
+            WeatherDetailItem(Icons.Default.Visibility, visibilityLabel, "${weather.visibility / 1000} km"),
+            WeatherDetailItem(Icons.Default.Thermostat, pressureLabel, "${weather.pressure} hPa")
         )
     }
 
@@ -195,7 +200,7 @@ fun WeatherContent(weather: WeatherCache, locationName: String) {
         
         item {
             Text(
-                text = "Current Conditions",
+                text = stringResource(R.string.weather_current_conditions),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -231,7 +236,7 @@ fun WeatherContent(weather: WeatherCache, locationName: String) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Updated ${dateFormat.format(Date(weather.lastUpdated))}",
+                    text = stringResource(R.string.weather_updated_at, dateFormat.format(Date(weather.lastUpdated))),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
@@ -350,29 +355,29 @@ private fun FloodAlertCard(weather: WeatherCache) {
     val (title, message, containerColor, contentColor) = when {
         description.contains("thunderstorm") || description.contains("storm") -> 
             Trace(
-                "Severe Weather Alert",
-                "Flash floods possible in low lying areas. Seek shelter.",
+                stringResource(R.string.alert_severe_title),
+                stringResource(R.string.alert_severe_msg),
                 MaterialTheme.colorScheme.errorContainer,
                 MaterialTheme.colorScheme.onErrorContainer
             )
         description.contains("heavy rain") ->
             Trace(
-                "Heavy Rain Warning",
-                "High risk of flooding. Monitor local advisories.",
+                stringResource(R.string.alert_heavy_rain_title),
+                stringResource(R.string.alert_heavy_rain_msg),
                 MaterialTheme.colorScheme.errorContainer,
                 MaterialTheme.colorScheme.onErrorContainer
             )
         isRainy ->
              Trace(
-                "Rainy Conditions",
-                "Roads may be slippery. Low flood risk but stay alert.",
+                stringResource(R.string.alert_rainy_title),
+                stringResource(R.string.alert_rainy_msg),
                 MaterialTheme.colorScheme.secondaryContainer,
                 MaterialTheme.colorScheme.onSecondaryContainer
             )
         isHighRisk ->
             Trace(
-                "High Humidity",
-                "Conditions are favorable for rain. Keep an umbrella handy.",
+                stringResource(R.string.alert_humidity_title),
+                stringResource(R.string.alert_humidity_msg),
                 MaterialTheme.colorScheme.surfaceVariant,
                 MaterialTheme.colorScheme.onSurfaceVariant
             )

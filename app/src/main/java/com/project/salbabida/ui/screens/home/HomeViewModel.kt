@@ -68,8 +68,17 @@ class HomeViewModel(
                 val cityPref = preferences.selectedCity.first() ?: "Sorsogon City"
 
                 // Calculate cache key
+                val (roundedLat, roundedLon) = if (hasCoordinates) {
+                    // Round to 2 decimal places (~1.1km precision) to improve cache hits
+                    val lat = String.format(Locale.US, "%.2f", effectiveLat).toDouble()
+                    val lon = String.format(Locale.US, "%.2f", effectiveLon).toDouble()
+                    Pair(lat, lon)
+                } else {
+                    Pair(0.0, 0.0)
+                }
+
                 val cacheKey = if (hasCoordinates) {
-                    String.format(Locale.US, "%.4f_%.4f", effectiveLat!!, effectiveLon!!)
+                    String.format(Locale.US, "%.2f_%.2f", roundedLat, roundedLon)
                 } else {
                     cityPref
                 }
@@ -93,7 +102,7 @@ class HomeViewModel(
                 // 3. Decide to Fetch
                 if (forceRefresh || cached == null || cached.isExpired()) {
                      val (fetchedWeather, fetchedName) = if (hasCoordinates) {
-                        repository.fetchWeatherByCoordinates(effectiveLat!!, effectiveLon!!)
+                        repository.fetchWeatherByCoordinates(roundedLat, roundedLon)
                     } else {
                         repository.fetchWeatherByCity(cityPref)
                     }

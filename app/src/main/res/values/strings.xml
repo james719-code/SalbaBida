@@ -1,9 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SalbaBida</string>
+    <string name="open_drawer">Open</string>
+    <string name="close_drawer">Close</string>
 
-    <string name="open_draw">Open</string>
+    <!-- Splash Screen -->
+    <string name="splash_logo_desc">SalbaBida Logo</string>
+    <string name="splash_title">SALBA-bida</string>
+    <string name="splash_subtitle">Community Flood Preparedness</string>
+    <string name="splash_version">Version 1.0.0</string>
 
-    <string name="close_draw">Close</string>
+    <!-- Home Screen -->
+    <string name="weather_loading_error">Unable to load weather</string>
+    <string name="weather_retry">Retry</string>
+    <string name="weather_current_conditions">Current Conditions</string>
+    <string name="weather_updated_at">Updated %s</string>
+    <string name="weather_feels_like">Feels Like</string>
+    <string name="weather_humidity">Humidity</string>
+    <string name="weather_wind">Wind</string>
+    <string name="weather_clouds">Clouds</string>
+    <string name="weather_visibility">Visibility</string>
+    <string name="weather_pressure">Pressure</string>
+    
+    <!-- Weather Alerts -->
+    <string name="alert_severe_title">Severe Weather Alert</string>
+    <string name="alert_severe_msg">Flash floods possible in low lying areas. Seek shelter.</string>
+    <string name="alert_heavy_rain_title">Heavy Rain Warning</string>
+    <string name="alert_heavy_rain_msg">High risk of flooding. Monitor local advisories.</string>
+    <string name="alert_rainy_title">Rainy Conditions</string>
+    <string name="alert_rainy_msg">Roads may be slippery. Low flood risk but stay alert.</string>
+    <string name="alert_humidity_title">High Humidity</string>
+    <string name="alert_humidity_msg">Conditions are favorable for rain. Keep an umbrella handy.</string>
+
+    <!-- About Screen -->
+    <string name="about_title">About</string>
+    <string name="about_back_desc">Back</string>
+    <string name="about_app_logo_desc">App Logo</string>
+    <string name="about_mission_title">Disaster Management &amp; Flood Preparedness</string>
+    <string name="about_mission_msg">Empowering Filipino communities with real-time data and tools to stay safe during flood events.</string>
+    <string name="about_features_title">Key Features</string>
+    <string name="about_new_badge">NEW</string>
+    
+    <string name="feature_weather_title">Weather</string>
+    <string name="feature_weather_desc">Real-time updates &amp; alerts</string>
+    <string name="feature_map_title">Mapping</string>
+    <string name="feature_map_desc">Evacuation centers &amp; zones</string>
+    <string name="feature_safety_title">Safety</string>
+    <string name="feature_safety_desc">Emergency tips &amp; guides</string>
+    <string name="feature_offline_title">Offline</string>
+    <string name="feature_offline_desc">Cached markers for no signal</string>
+    
+    <string name="about_developed_by_label">Developed by</string>
+    <string name="about_developer_name">James Ryan S. Gallego</string>
+    <string name="about_powered_by">Powered by OpenStreetMap and OpenWeatherMap</string>
+    <string name="about_copyright">© 2026 SALBA-bida. All Rights Reserved.</string>
 
 </resources>

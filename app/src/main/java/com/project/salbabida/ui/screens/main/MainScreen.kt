@@ -33,9 +33,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.remember
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -111,53 +132,94 @@ fun MainScreen(
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = backgroundColor,
-                tonalElevation = 0.dp,
-                modifier = Modifier.drawBehind {
-                    drawLine(
-                        color = outlineColor.copy(alpha = 0.15f),
-                        start = Offset(0f, 0f),
-                        end = Offset(size.width, 0f),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+                    .fillMaxWidth()
             ) {
-                navItems.forEach { item ->
-                    val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                // Floating Capsule Surface
+                androidx.compose.material3.Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    tonalElevation = 3.dp,
+                    shadowElevation = 8.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 12.dp, horizontal = 12.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        navItems.forEach { item ->
+                            val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                            val iconColor by animateColorAsState(
+                                if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                label = "iconColor"
+                            )
+                            val containerColor by animateColorAsState(
+                                if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                label = "containerColor"
+                            )
+                            val scale by animateFloatAsState(
+                                if (selected) 1.1f else 1.0f,
+                                label = "scale"
+                            )
+
+                            // Custom Navigation Item
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null, // Handled by containerColor or default ripple if needed, but here we want smooth color transition
+                                        onClick = {
+                                            navController.navigate(item.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        }
+                                    )
+                                    .background(containerColor)
+                                    .padding(vertical = 10.dp, horizontal = 16.dp), // Comfortable touch target
+                                contentAlignment = androidx.compose.ui.Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                                        contentDescription = item.title,
+                                        tint = iconColor,
+                                        modifier = Modifier
+                                            .scale(scale)
+                                            .size(24.dp)
+                                    )
+                                    
+                                    // Show label ONLY when selected to save space and look premium
+                                    AnimatedVisibility(
+                                        visible = selected,
+                                        enter = fadeIn() + expandHorizontally(),
+                                        exit = fadeOut() + shrinkHorizontally()
+                                    ) {
+                                        Text(
+                                            text = item.title,
+                                            color = iconColor,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(start = 8.dp),
+                                            maxLines = 1
+                                        )
+                                    }
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
-                        },
-                        label = {
-                            Text(
-                                item.title,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-                            )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.title,
-                                tint = if (selected) primaryColor else onSurfaceVariantColor
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = primaryColor,
-                            selectedTextColor = primaryColor,
-                            unselectedIconColor = onSurfaceVariantColor,
-                            unselectedTextColor = onSurfaceVariantColor,
-                            indicatorColor = primaryColor.copy(alpha = 0.1f)
-                        )
-                    )
+                        }
+                    }
                 }
             }
         }

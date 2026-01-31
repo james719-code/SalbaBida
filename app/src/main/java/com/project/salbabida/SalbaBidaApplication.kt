@@ -5,6 +5,8 @@ import android.content.Context
 import android.os.Environment
 import com.project.salbabida.data.database.SalbaBidaDatabase
 import com.project.salbabida.data.preferences.UserPreferences
+import com.project.salbabida.data.AppContainer
+import com.project.salbabida.data.DefaultAppContainer
 import org.osmdroid.config.Configuration
 import java.io.File
 
@@ -16,6 +18,10 @@ class SalbaBidaApplication : Application() {
     lateinit var userPreferences: UserPreferences
         private set
     
+    val container: AppContainer by lazy {
+        DefaultAppContainer(this)
+    }
+
     override fun onCreate() {
         super.onCreate()
         instance = this

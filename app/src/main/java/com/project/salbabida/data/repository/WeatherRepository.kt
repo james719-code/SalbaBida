@@ -44,7 +44,7 @@ class WeatherRepository(
 
     suspend fun fetchWeatherByCoordinates(lat: Double, lon: Double): Pair<WeatherCache, String> {
         val response = weatherService.getWeatherByCoordinates(lat, lon, apiKey)
-        val cacheKey = String.format(Locale.US, "%.4f_%.4f", lat, lon)
+        val cacheKey = String.format(Locale.US, "%.2f_%.2f", lat, lon)
 
         val newCache = WeatherCache(
             city = cacheKey,

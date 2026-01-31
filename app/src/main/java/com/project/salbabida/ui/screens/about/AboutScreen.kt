@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.project.salbabida.BuildConfig
 import com.project.salbabida.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +67,7 @@ fun AboutScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        "About", 
+                        stringResource(R.string.about_title), 
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     ) 
@@ -75,7 +76,7 @@ fun AboutScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack, 
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.about_back_desc),
                             tint = colorScheme.onBackground
                         )
                     }
@@ -135,7 +136,7 @@ fun AboutScreen(
                     ) {
                         Icon(
                             painter = painterResource(id = R.mipmap.ic_launcher),
-                            contentDescription = "App Logo",
+                            contentDescription = stringResource(R.string.about_app_logo_desc),
                             modifier = Modifier.size(64.dp),
                             tint = Color.White
                         )
@@ -146,7 +147,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "SALBA-bida",
+                text = stringResource(R.string.splash_title),
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontSize = 32.sp,
                     letterSpacing = 1.sp
@@ -172,7 +173,7 @@ fun AboutScreen(
             
             // Mission Statement
             Text(
-                text = "Disaster Management & Flood Preparedness",
+                text = stringResource(R.string.about_mission_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
@@ -182,7 +183,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Empowering Filipino communities with real-time data and tools to stay safe during flood events.",
+                text = stringResource(R.string.about_mission_msg),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = colorScheme.onSurfaceVariant,
@@ -200,7 +201,7 @@ fun AboutScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Key Features",
+                    text = stringResource(R.string.about_features_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -210,7 +211,7 @@ fun AboutScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
-                        text = "NEW",
+                        text = stringResource(R.string.about_new_badge),
                         style = MaterialTheme.typography.labelSmall,
                         color = colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -220,10 +221,10 @@ fun AboutScreen(
             }
             
             val features = listOf(
-                FeatureItem("weather", "Weather", "Real-time updates & alerts", Icons.Default.Cloud),
-                FeatureItem("map", "Mapping", "Evacuation centers & zones", Icons.Default.Map),
-                FeatureItem("emergency", "Safety", "Emergency tips & guides", Icons.Default.Warning),
-                FeatureItem("offline", "Offline", "Cached markers for no signal", Icons.Default.WifiOff)
+                FeatureItem("weather", stringResource(R.string.feature_weather_title), stringResource(R.string.feature_weather_desc), Icons.Default.Cloud),
+                FeatureItem("map", stringResource(R.string.feature_map_title), stringResource(R.string.feature_map_desc), Icons.Default.Map),
+                FeatureItem("emergency", stringResource(R.string.feature_safety_title), stringResource(R.string.feature_safety_desc), Icons.Default.Warning),
+                FeatureItem("offline", stringResource(R.string.feature_offline_title), stringResource(R.string.feature_offline_desc), Icons.Default.WifiOff)
             )
             
             Column(
@@ -276,12 +277,12 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "Developed by",
+                            text = stringResource(R.string.about_developed_by_label),
                             style = MaterialTheme.typography.labelMedium,
                             color = colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "James Ryan S. Gallego",
+                            text = stringResource(R.string.about_developer_name),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -292,7 +293,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(64.dp))
             
             Text(
-                text = "Powered by OpenStreetMap and OpenWeatherMap",
+                text = stringResource(R.string.about_powered_by),
                 style = MaterialTheme.typography.labelSmall,
                 color = colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -301,7 +302,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "© 2026 SALBA-bida. All Rights Reserved.",
+                text = stringResource(R.string.about_copyright),
                 style = MaterialTheme.typography.labelSmall,
                 color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )

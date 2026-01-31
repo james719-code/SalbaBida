@@ -37,6 +37,7 @@ import com.project.salbabida.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun SplashScreen(
@@ -155,7 +156,7 @@ fun SplashScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.mipmap.ic_launcher),
-                        contentDescription = "SalbaBida Logo",
+                        contentDescription = stringResource(R.string.splash_logo_desc),
                         modifier = Modifier
                             .size(140.dp)
                             .clip(CircleShape)
@@ -167,7 +168,7 @@ fun SplashScreen(
             
             // App Title
             Text(
-                text = "SALBA-bida",
+                text = stringResource(R.string.splash_title),
                 style = MaterialTheme.typography.displaySmall,
                 color = Color.White.copy(alpha = textAlpha.value),
                 fontWeight = FontWeight.Bold,
@@ -177,7 +178,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Community Flood Preparedness",
+                text = stringResource(R.string.splash_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = textAlpha.value * 0.8f),
                 fontWeight = FontWeight.Light
@@ -191,7 +192,7 @@ fun SplashScreen(
                 .padding(bottom = 32.dp)
         ) {
              Text(
-                text = "Version 1.0.0",
+                text = stringResource(R.string.splash_version),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.3f)
             )
