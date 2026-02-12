@@ -30,6 +30,9 @@ android {
              localProperties.load(FileInputStream(localPropertiesFile))
         }
         val apiKey = localProperties.getProperty("OPENWEATHER_API_KEY") ?: ""
+        if (apiKey.isBlank()) {
+            logger.warn("WARNING: OPENWEATHER_API_KEY is not set in local.properties — weather features will not work.")
+        }
         buildConfigField("String", "OPENWEATHER_API_KEY", "\"$apiKey\"")
     }
 
@@ -86,7 +89,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.foundation.layout)
-    implementation(libs.androidx.ui)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     // Navigation
@@ -99,9 +101,6 @@ dependencies {
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
-
-    // WorkManager
-    implementation(libs.androidx.work.runtime.ktx)
 
     // Retrofit & OkHttp
     implementation(libs.retrofit)

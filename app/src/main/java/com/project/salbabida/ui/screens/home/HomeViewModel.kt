@@ -101,18 +101,27 @@ class HomeViewModel(
                 
                 // 3. Decide to Fetch
                 if (forceRefresh || cached == null || cached.isExpired()) {
-                     val (fetchedWeather, fetchedName) = if (hasCoordinates) {
+                    val result = if (hasCoordinates) {
                         repository.fetchWeatherByCoordinates(roundedLat, roundedLon)
                     } else {
                         repository.fetchWeatherByCity(cityPref)
                     }
-                    
-                    // Update location name if strictly dynamic
-                    if (savedLocationName.isNullOrBlank() && (!hasCoordinates || userLocationLabel.isBlank())) {
-                         _uiState.value = _uiState.value.copy(locationName = fetchedName)
-                    }
-                    
-                    _uiState.value = _uiState.value.copy(weatherData = fetchedWeather)
+
+                    result.fold(
+                        onSuccess = { (fetchedWeather, fetchedName) ->
+                            // Update location name if strictly dynamic
+                            if (savedLocationName.isNullOrBlank() && (!hasCoordinates || userLocationLabel.isBlank())) {
+                                _uiState.value = _uiState.value.copy(locationName = fetchedName)
+                            }
+                            _uiState.value = _uiState.value.copy(weatherData = fetchedWeather)
+                        },
+                        onFailure = { e ->
+                            // Keep showing cached data if available; surface error
+                            _uiState.value = _uiState.value.copy(
+                                error = e.message ?: "Failed to fetch weather"
+                            )
+                        }
+                    )
                 }
 
                 _uiState.value = _uiState.value.copy(isLoading = false, isRefreshing = false, error = null)

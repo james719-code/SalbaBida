@@ -1,0 +1,9 @@
+# This file must *NOT* be checked into Version Control Systems.
+# Copy this to local.properties and fill in your values.
+
+# Location of the Android SDK (auto-detected by Android Studio)
+# sdk.dir=/path/to/android/sdk
+
+# OpenWeatherMap API key — required for weather features
+# Get one at https://openweathermap.org/appid
+OPENWEATHER_API_KEY=YOUR_KEY_HERE

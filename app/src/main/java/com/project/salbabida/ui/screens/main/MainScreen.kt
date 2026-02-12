@@ -8,12 +8,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Map
-import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -90,7 +90,7 @@ fun MainScreen(
         BottomNavItem("Home", Icons.Filled.Home, Icons.Outlined.Home, BottomNavRoute.Home.route),
         BottomNavItem("Map", Icons.Filled.Map, Icons.Outlined.Map, BottomNavRoute.Map.route),
         BottomNavItem("Safety", Icons.Filled.HealthAndSafety, Icons.Outlined.HealthAndSafety, BottomNavRoute.Safety.route),
-        BottomNavItem("Preparedness", Icons.Filled.MenuBook, Icons.Outlined.MenuBook, BottomNavRoute.Preparedness.route),
+        BottomNavItem("Preparedness", Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook, BottomNavRoute.Preparedness.route),
         BottomNavItem("More", Icons.Filled.Settings, Icons.Outlined.Settings, BottomNavRoute.More.route)
     )
 

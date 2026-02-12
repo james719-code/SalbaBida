@@ -4,10 +4,12 @@ import android.content.Context
 import com.project.salbabida.BuildConfig
 import com.project.salbabida.data.api.RetrofitClient
 import com.project.salbabida.data.database.SalbaBidaDatabase
+import com.project.salbabida.data.repository.MapRepository
 import com.project.salbabida.data.repository.WeatherRepository
 
 interface AppContainer {
     val weatherRepository: WeatherRepository
+    val mapRepository: MapRepository
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -21,6 +23,13 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             weatherDao = database.weatherCacheDao(),
             weatherService = RetrofitClient.weatherService,
             apiKey = BuildConfig.OPENWEATHER_API_KEY
+        )
+    }
+
+    override val mapRepository: MapRepository by lazy {
+        MapRepository(
+            homeLocationDao = database.homeLocationDao(),
+            offlineMarkerDao = database.offlineMarkerDao()
         )
     }
 }
