@@ -1,8 +1,6 @@
 package com.project.salbabida.ui.screens.map
 
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -62,6 +60,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,8 +79,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.project.salbabida.SalbaBidaApplication
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.project.salbabida.data.database.entities.MarkerCategory
 import com.project.salbabida.data.database.entities.OfflineMarker
 import com.project.salbabida.data.repository.EvacuationCenter
@@ -97,13 +95,7 @@ import org.osmdroid.views.overlay.Marker
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
-    val app = SalbaBidaApplication.getInstance()
-    val viewModel: MapViewModel = viewModel(
-        factory = MapViewModel.Factory(
-            repository = app.container.mapRepository,
-            userPreferences = app.userPreferences
-        )
-    )
+    val viewModel: MapViewModel = hiltViewModel()
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val filteredMarkers by viewModel.filteredMarkers.collectAsStateWithLifecycle()
@@ -256,6 +248,18 @@ private fun MapOsmView(
     onLocationTapped: (Double, Double) -> Unit,
     onMarkerClicked: (OfflineMarker) -> Unit
 ) {
+    // Track MapView for lifecycle management
+    var localMapView by remember { mutableStateOf<MapView?>(null) }
+
+    // Lifecycle: onResume / onPause / onDetach
+    DisposableEffect(localMapView) {
+        localMapView?.onResume()
+        onDispose {
+            localMapView?.onPause()
+            localMapView?.onDetach()
+        }
+    }
+
     AndroidView(
         factory = { ctx ->
             MapView(ctx).apply {
@@ -265,6 +269,13 @@ private fun MapOsmView(
                 controller.setZoom(14.0)
                 controller.setCenter(GeoPoint(cityCenter.first, cityCenter.second))
 
+                // Add GPS location overlay (blue dot)
+                val locationOverlay = org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay(
+                    org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider(ctx), this
+                )
+                locationOverlay.enableMyLocation()
+                overlays.add(locationOverlay)
+
                 addMapListener(object : org.osmdroid.events.MapListener {
                     override fun onScroll(event: org.osmdroid.events.ScrollEvent?): Boolean {
                         val c = mapCenter
@@ -273,11 +284,16 @@ private fun MapOsmView(
                     }
                     override fun onZoom(event: org.osmdroid.events.ZoomEvent?): Boolean = true
                 })
+                localMapView = this
                 onMapCreated(this)
             }
         },
         update = { map ->
-            val overlaysToKeep = map.overlays.filterIsInstance<org.osmdroid.views.overlay.TilesOverlay>()
+            // Keep tile overlays and GPS location overlay, remove everything else
+            val overlaysToKeep = map.overlays.filter { overlay ->
+                overlay is org.osmdroid.views.overlay.TilesOverlay ||
+                overlay is org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+            }
             map.overlays.clear()
             map.overlays.addAll(overlaysToKeep)
 
@@ -288,7 +304,7 @@ private fun MapOsmView(
                     title = center.name
                     snippet = center.distance?.let { "Distance: ${String.format("%.2f", it)} km" }.orEmpty()
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    icon = createMarkerIcon(context, MarkerCategory.EVACUATION_CENTER, false)
+                    icon = MarkerIconCache.getMarkerIcon(context, MarkerCategory.EVACUATION_CENTER, false)
                 }
                 map.overlays.add(marker)
             }
@@ -300,7 +316,7 @@ private fun MapOsmView(
                     title = offlineMarker.name
                     snippet = "Tap to edit or delete"
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    icon = createMarkerIcon(context, offlineMarker.category, false)
+                    icon = MarkerIconCache.getMarkerIcon(context, offlineMarker.category, false)
                     setOnMarkerClickListener { _, _ ->
                         if (userRole == "admin") {
                             onMarkerClicked(offlineMarker)
@@ -318,7 +334,7 @@ private fun MapOsmView(
                     title = name
                     snippet = "Your Home"
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    icon = createHomeMarkerIcon(context)
+                    icon = MarkerIconCache.getHomeIcon(context)
                 }
                 map.overlays.add(homeMarker)
             }
@@ -1202,72 +1218,4 @@ private fun getCategoryColor(category: MarkerCategory): Color = when (category) 
     MarkerCategory.FLOOD_ZONE -> Color(0xFFD32F2F)
     MarkerCategory.SAFE_AREA -> Color(0xFF2E7D32)
     MarkerCategory.RESOURCE_CENTER -> Color(0xFFF9A825)
-}
-
-private fun createMarkerIcon(
-    context: Context,
-    category: MarkerCategory,
-    isSelected: Boolean
-): Drawable {
-    val color = when (category) {
-        MarkerCategory.EVACUATION_CENTER -> android.graphics.Color.parseColor("#1976D2")
-        MarkerCategory.FLOOD_ZONE -> android.graphics.Color.parseColor("#D32F2F")
-        MarkerCategory.SAFE_AREA -> android.graphics.Color.parseColor("#2E7D32")
-        MarkerCategory.RESOURCE_CENTER -> android.graphics.Color.parseColor("#F9A825")
-    }
-    return createPinDrawable(context, color, if (isSelected) 1.2f else 1f)
-}
-
-private fun createHomeMarkerIcon(context: Context): Drawable {
-    return createPinDrawable(context, android.graphics.Color.parseColor("#3F51B5"), 1.1f)
-}
-
-private fun createPinDrawable(context: Context, color: Int, scale: Float): Drawable {
-    val pinWidth = (48 * scale).toInt()
-    val pinHeight = (64 * scale).toInt()
-    val bitmap = android.graphics.Bitmap.createBitmap(
-        pinWidth, pinHeight, android.graphics.Bitmap.Config.ARGB_8888
-    )
-    val canvas = android.graphics.Canvas(bitmap)
-    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-
-    val path = android.graphics.Path()
-    val centerX = pinWidth / 2f
-    val circleRadius = pinWidth / 2.5f
-    val circleY = circleRadius + 4
-    path.addCircle(centerX, circleY, circleRadius, android.graphics.Path.Direction.CW)
-
-    val pointPath = android.graphics.Path()
-    pointPath.moveTo(centerX - circleRadius * 0.6f, circleY + circleRadius * 0.5f)
-    pointPath.lineTo(centerX, pinHeight.toFloat() - 4)
-    pointPath.lineTo(centerX + circleRadius * 0.6f, circleY + circleRadius * 0.5f)
-    pointPath.close()
-
-    // Shadow
-    paint.color = android.graphics.Color.argb(80, 0, 0, 0)
-    canvas.save()
-    canvas.translate(2f, 3f)
-    canvas.drawPath(path, paint)
-    canvas.drawPath(pointPath, paint)
-    canvas.restore()
-
-    // Body
-    paint.color = color
-    paint.style = android.graphics.Paint.Style.FILL
-    canvas.drawPath(path, paint)
-    canvas.drawPath(pointPath, paint)
-
-    // Border
-    paint.color = android.graphics.Color.argb(100, 0, 0, 0)
-    paint.style = android.graphics.Paint.Style.STROKE
-    paint.strokeWidth = 2f
-    canvas.drawPath(path, paint)
-    canvas.drawPath(pointPath, paint)
-
-    // Dot
-    paint.color = android.graphics.Color.WHITE
-    paint.style = android.graphics.Paint.Style.FILL
-    canvas.drawCircle(centerX, circleY, circleRadius * 0.35f, paint)
-
-    return BitmapDrawable(context.resources, bitmap)
 }

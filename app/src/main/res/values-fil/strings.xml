@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash Screen -->
+    <string name="splash_subtitle">Komunidad para sa Paghahanda sa Baha</string>
+
+    <!-- Auth -->
+    <string name="login_email_required">Kinakailangan ang email</string>
+    <string name="login_invalid_email">Hindi tamang format ng email</string>
+    <string name="login_password_required">Kinakailangan ang password</string>
+    <string name="login_password_min">Dapat hindi bababa sa 6 na character ang password</string>
+    <string name="login_sign_in">Mag-sign In</string>
+    <string name="login_no_account">Wala pang account?</string>
+    <string name="login_sign_up">Mag-sign Up</string>
+    <string name="login_forgot_password">Nakalimutan ang Password?</string>
+    <string name="login_reset_sent">Naipadala ang password reset email sa %s</string>
+    <string name="login_enter_email_first">Ilagay muna ang iyong email</string>
+    <string name="login_enter_valid_email">Maglagay ng tamang email</string>
+
+    <!-- Home Screen -->
+    <string name="weather_loading_error">Hindi ma-load ang panahon</string>
+    <string name="weather_retry">Subukan Muli</string>
+    <string name="weather_current_conditions">Kasalukuyang Kondisyon</string>
+    <string name="weather_updated_at">Na-update %s</string>
+    <string name="weather_feels_like">Pakiramdam</string>
+    <string name="weather_humidity">Halumigmig</string>
+    <string name="weather_wind">Hangin</string>
+    <string name="weather_clouds">Ulap</string>
+    <string name="weather_visibility">Visibility</string>
+    <string name="weather_pressure">Presyon</string>
+
+    <!-- Weather Alerts -->
+    <string name="alert_severe_title">Matinding Babala sa Panahon</string>
+    <string name="alert_severe_msg">Posibleng flash floods sa mababang lugar. Humanap ng silungan.</string>
+    <string name="alert_heavy_rain_title">Babala sa Malakas na Ulan</string>
+    <string name="alert_heavy_rain_msg">Mataas ang panganib ng pagbaha. Subaybayan ang mga advisory.</string>
+    <string name="alert_rainy_title">Maulan na Kondisyon</string>
+    <string name="alert_rainy_msg">Maaaring madulas ang mga kalsada. Mababa ang panganib ng baha ngunit mag-ingat.</string>
+    <string name="alert_humidity_title">Mataas na Halumigmig</string>
+    <string name="alert_humidity_msg">Paborable ang kondisyon para sa ulan. Magdala ng payong.</string>
+
+    <!-- Map Screen -->
+    <string name="map_tap_to_select">I-tap ang mapa para pumili ng lokasyon</string>
+    <string name="map_cancel">Kanselahin</string>
+    <string name="map_filters">Mga Filter</string>
+    <string name="map_nearest_shelter">Pinakamalapit na Shelter</string>
+    <string name="map_distance_format">%.2f km ang layo</string>
+    <string name="map_navigate">Mag-navigate</string>
+    <string name="map_set_home">Itakda ang Tahanan</string>
+    <string name="map_add_marker">Magdagdag ng Marker</string>
+    <string name="map_set_weather">Itakda ang Lokasyon ng Panahon</string>
+    <string name="map_purge_shelters">Burahin ang Online na Shelters</string>
+    <string name="map_online_shelters">Online na Shelters</string>
+
+    <!-- Safety Screen -->
+    <string name="safety_flashlight">Flashlight</string>
+    <string name="safety_siren">Emergency Siren</string>
+    <string name="safety_hotlines">Mga Emergency Hotline</string>
+    <string name="safety_call">Tumawag</string>
+
+    <!-- Settings / More -->
+    <string name="settings_title">Mga Setting</string>
+    <string name="settings_dark_theme">Madilim na Tema</string>
+    <string name="settings_dynamic_colors">Mga Dynamic na Kulay</string>
+    <string name="settings_update_location">I-update ang Lokasyon</string>
+    <string name="settings_clear_cache">Burahin ang Cache</string>
+    <string name="settings_delete_markers">Burahin Lahat ng Markers</string>
+    <string name="settings_logout">Mag-logout</string>
+    <string name="settings_sync_now">I-sync Ngayon</string>
+
+    <!-- Preparedness Screen -->
+    <string name="prep_tab_before">Bago</string>
+    <string name="prep_tab_during">Habang</string>
+    <string name="prep_tab_after">Pagkatapos</string>
+    <string name="prep_search_hint">Maghanap ng mga tip sa paghahanda…</string>
+    <string name="prep_expand">Palawakin</string>
+    <string name="prep_collapse">I-collapse</string>
+
+    <!-- Before Tips -->
+    <string name="prep_before_1_title">Makinig sa Ulat ng Panahon</string>
+    <string name="prep_before_1_desc">Laging makinig sa ulat ng panahon mula sa PAGASA at NDRRMC upang maagapan ang mga babala ukol sa bagyo at pagbaha.</string>
+    <string name="prep_before_2_title">Maghanda ng Emergency Kit</string>
+    <string name="prep_before_2_desc">Maghanda ng Emergency Kit na may pagkain, tubig, gamot, flashlight, baterya, at mahahalagang dokumento.</string>
+    <string name="prep_before_3_title">Ilipat ang Mahahalagang Gamit</string>
+    <string name="prep_before_3_desc">Ilipat sa mas mataas na lugar ang mahahalagang gamit tulad ng mga dokumento, electronics, at muwebles upang maiwasan ang pinsala ng baha.</string>
+    <string name="prep_before_4_title">Suriin ang Tibay ng Bahay</string>
+    <string name="prep_before_4_desc">Tiyaking matibay ang bahay at walang mga butas o puwang na maaaring pasukin ng tubig-baha.</string>
+    <string name="prep_before_5_title">Alamin ang Evacuation Center</string>
+    <string name="prep_before_5_desc">Alamin ang pinakamalapit na evacuation center at ligtas na ruta upang makapaglipat agad sakaling kailanganin.</string>
+    <string name="prep_before_6_title">Gamitin ang SALBA-bida App</string>
+    <string name="prep_before_6_desc">Para sa karagdagang paghahanda, gamitin ang SALBA-bida app upang makatanggap ng real-time na update at emergency assistance.</string>
+
+    <!-- During Tips -->
+    <string name="prep_during_1_title">Manatili sa Ligtas na Lugar</string>
+    <string name="prep_during_1_desc">Manatili sa ligtas na lugar at iwasang lumangoy o lumakad sa baha lalo na kung hindi alam ang lalim nito upang maiwasan ang panganib.</string>
+    <string name="prep_during_2_title">Patayin ang Kuryente</string>
+    <string name="prep_during_2_desc">Siguraduhing naka-off ang main switch ng kuryente at iwasang hawakan ang mga cable o outlet na nasa tubig-baha upang maiwasan ang electrocution.</string>
+    <string name="prep_during_3_title">Manatiling Nakikinig sa Balita</string>
+    <string name="prep_during_3_desc">Patuloy na makinig sa balita para sa mga update at advisory mula sa mga awtoridad upang manatiling ligtas at handa.</string>
+    <string name="prep_during_4_title">Manatiling Kalmado at Handa</string>
+    <string name="prep_during_4_desc">Mag-ingat sa mga paparating na rescue at huwag mag-panic upang mas madali kang matulungan sakaling kinakailangan.</string>
+    <string name="prep_during_5_title">Gamitin ang SALBA-bida App</string>
+    <string name="prep_during_5_desc">Subaybayan ang SALBA-bida app upang mapanatiling alerto ang iyong Barangay tungkol sa kalagayan ng iyong lugar at makatanggap ng mahahalagang update.</string>
+
+    <!-- After Tips -->
+    <string name="prep_after_1_title">Suriin ang Kuryente Bago Buksan</string>
+    <string name="prep_after_1_desc">Siguraduhing walang mga live wire o outlet na nakalubog sa tubig bago buksan ang kuryente upang matiyak ang kaligtasan.</string>
+    <string name="prep_after_2_title">I-report ang mga Nasirang Pasilidad</string>
+    <string name="prep_after_2_desc">I-report ang mga nasirang pasilidad tulad ng poste ng kuryente, tubo ng tubig, at iba pa sa mga awtoridad upang maiwasan ang dagdag na pinsala o aksidente.</string>
+    <string name="prep_after_3_title">Iwasan ang Maruming Tubig-Baha</string>
+    <string name="prep_after_3_desc">Iwasang lumangoy o lumakad sa maruming tubig-baha upang maiwasan ang sakit at impeksyon.</string>
+    <string name="prep_after_4_title">Tingnan ang SALBA-bida App para sa Tulong</string>
+    <string name="prep_after_4_desc">Bisitahin ang SALBA-bida app para sa mga donasyon mula sa Government at Non-government Organizations bilang tulong sa mga nasalanta ng matinding pagbaha.</string>
+
+    <!-- About Screen -->
+    <string name="about_mission_title">Pamamahala ng Kalamidad at Paghahanda sa Baha</string>
+    <string name="about_mission_msg">Pagpapalakas sa mga komunidad ng Pilipino gamit ang real-time na datos at mga kasangkapan upang manatiling ligtas habang may baha.</string>
+    <string name="about_features_title">Mga Pangunahing Feature</string>
+    <string name="about_new_badge">BAGO</string>
+
+    <string name="feature_weather_title">Panahon</string>
+    <string name="feature_weather_desc">Real-time na update at alerto</string>
+    <string name="feature_map_title">Mapa</string>
+    <string name="feature_map_desc">Mga evacuation center at zona</string>
+    <string name="feature_safety_title">Kaligtasan</string>
+    <string name="feature_safety_desc">Mga tip at gabay sa emergency</string>
+    <string name="feature_offline_title">Offline</string>
+    <string name="feature_offline_desc">Naka-cache na markers kapag walang signal</string>
+
+    <string name="about_developed_by_label">Ginawa ni</string>
+    <string name="about_powered_by">Pinapagana ng OpenStreetMap at OpenWeatherMap</string>
+
+    <!-- Bottom Nav -->
+    <string name="nav_home">Tahanan</string>
+    <string name="nav_map">Mapa</string>
+    <string name="nav_safety">Kaligtasan</string>
+    <string name="nav_preparedness">Paghahanda</string>
+    <string name="nav_more">Iba Pa</string>
+
+    <!-- Top Bar Titles -->
+    <string name="topbar_evacuation_map">Mapa ng Evacuation</string>
+    <string name="topbar_safety_tools">Mga Kasangkapan sa Kaligtasan</string>
+    <string name="topbar_flood_preparedness">Paghahanda sa Baha</string>
+
+    <!-- Common -->
+    <string name="common_cancel">Kanselahin</string>
+    <string name="common_save">I-save</string>
+    <string name="common_delete">Burahin</string>
+    <string name="common_update">I-update</string>
+    <string name="common_yes">Oo</string>
+    <string name="common_close">Isara</string>
+    <string name="common_back">Bumalik</string>
+    <string name="common_email_label">Email</string>
+    <string name="common_password_label">Password</string>
+    <string name="common_unknown_error">Hindi kilalang error</string>
+
+</resources>

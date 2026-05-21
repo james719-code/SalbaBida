@@ -85,7 +85,6 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.project.salbabida.R
-import com.project.salbabida.SalbaBidaApplication
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -97,8 +96,7 @@ fun SignUpScreen(
     onSignUpSuccess: () -> Unit
 ) {
     val context = LocalContext.current
-    val app = SalbaBidaApplication.getInstance()
-    val preferences = app.userPreferences
+    val preferences = remember { com.project.salbabida.data.preferences.UserPreferences(context) }
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     
     var name by remember { mutableStateOf("") }

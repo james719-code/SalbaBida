@@ -5,6 +5,7 @@ import com.project.salbabida.data.database.dao.HomeLocationDao
 import com.project.salbabida.data.database.dao.OfflineMarkerDao
 import com.project.salbabida.data.database.entities.HomeLocation
 import com.project.salbabida.data.database.entities.OfflineMarker
+import com.project.salbabida.data.database.entities.SyncStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
 
@@ -43,6 +44,19 @@ class MapRepository(
 
     suspend fun deleteMarker(marker: OfflineMarker) =
         offlineMarkerDao.deleteMarker(marker)
+
+    // ── Sync helpers ────────────────────────────────────────────────
+
+    suspend fun getPendingMarkers(): List<OfflineMarker> =
+        offlineMarkerDao.getPendingMarkers()
+
+    suspend fun getFailedMarkers(): List<OfflineMarker> =
+        offlineMarkerDao.getMarkersByStatus(SyncStatus.FAILED)
+
+    suspend fun getPendingAndFailedCount(): Int =
+        getPendingMarkers().size + getFailedMarkers().size
+
+    // ── Firestore ───────────────────────────────────────────────────
 
     suspend fun fetchEvacuationCenters(): List<EvacuationCenter> {
         return try {

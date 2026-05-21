@@ -70,8 +70,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.project.salbabida.SalbaBidaApplication
-import com.project.salbabida.data.api.RetrofitClient
 import com.project.salbabida.data.database.entities.WeatherCache
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -79,21 +77,16 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import com.project.salbabida.R
+import com.project.salbabida.data.risk.FloodRiskAssessment
+import com.project.salbabida.data.risk.FloodRiskLevel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val app = remember { context.applicationContext as SalbaBidaApplication }
-    
-    val repository = remember {
-        app.container.weatherRepository
-    }
-    
-    val viewModel: HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = HomeViewModelFactory(repository, app.userPreferences)
-    )
+    val viewModel: HomeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 
     val uiState by viewModel.uiState.collectAsState()
     
@@ -102,6 +95,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val isRefreshing = uiState.isRefreshing
     val error = uiState.error
     val locationName = uiState.locationName
+    val riskAssessment = uiState.floodRiskAssessment
     
     LaunchedEffect(Unit) {
         // Trigger generic updates if needed, though VM init handles first load
@@ -120,7 +114,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
         } else {
             weatherData?.let { weather ->
-                WeatherContent(weather, locationName)
+                WeatherContent(weather, locationName, riskAssessment)
             }
         }
     }
@@ -135,7 +129,7 @@ fun ErrorState(error: String, onRetry: () -> Unit) {
     ) {
         Icon(
             imageVector = Icons.Default.Cloud,
-            contentDescription = null,
+            contentDescription = stringResource(R.string.weather_loading_error),
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -166,7 +160,11 @@ fun ErrorState(error: String, onRetry: () -> Unit) {
 }
 
 @Composable
-fun WeatherContent(weather: WeatherCache, locationName: String) {
+fun WeatherContent(
+    weather: WeatherCache,
+    locationName: String,
+    riskAssessment: FloodRiskAssessment?
+) {
     val feelsLikeLabel = stringResource(R.string.weather_feels_like)
     val humidityLabel = stringResource(R.string.weather_humidity)
     val windLabel = stringResource(R.string.weather_wind)
@@ -195,7 +193,7 @@ fun WeatherContent(weather: WeatherCache, locationName: String) {
         }
         
         item {
-            FloodAlertCard(weather)
+            FloodRiskCard(riskAssessment)
         }
         
         item {
@@ -204,7 +202,7 @@ fun WeatherContent(weather: WeatherCache, locationName: String) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                modifier = Modifier.semantics { heading() }.padding(start = 4.dp, bottom = 4.dp)
             )
         }
 
@@ -249,6 +247,75 @@ fun WeatherContent(weather: WeatherCache, locationName: String) {
     }
 }
 
+@Composable
+private fun FloodRiskCard(assessment: FloodRiskAssessment?) {
+    if (assessment == null) return
+
+    val (containerColor, contentColor) = when (assessment.level) {
+        FloodRiskLevel.LOW -> Trace(
+            "",
+            "",
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        FloodRiskLevel.MODERATE -> Trace(
+            "",
+            "",
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer
+        )
+        FloodRiskLevel.HIGH,
+        FloodRiskLevel.EMERGENCY -> Trace(
+            "",
+            "",
+            MaterialTheme.colorScheme.errorContainer,
+            MaterialTheme.colorScheme.onErrorContainer
+        )
+    }.let { it.bg to it.fg }
+
+    val levelLabel = assessment.level.name.lowercase()
+        .replaceFirstChar { it.uppercase() }
+
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = if (assessment.level == FloodRiskLevel.LOW) Icons.Default.WaterDrop else Icons.Default.Warning,
+                contentDescription = "Flood risk",
+                tint = contentColor,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Flood Risk: $levelLabel (${assessment.score}/100)",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = assessment.recommendedAction,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = contentColor.copy(alpha = 0.92f)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = assessment.reasons.take(2).joinToString(" | "),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = contentColor.copy(alpha = 0.78f)
+                )
+            }
+        }
+    }
+}
+
 data class WeatherDetailItem(val icon: ImageVector, val label: String, val value: String)
 
 @Composable
@@ -272,6 +339,7 @@ private fun WeatherHeaderCard(weather: WeatherCache, location: String) {
             modifier = Modifier
                 .background(Brush.linearGradient(gradientColors))
                 .fillMaxWidth()
+                .semantics(mergeDescendants = true) {}
         ) {
             // subtle artistic circle overlay
             Box(
@@ -401,7 +469,7 @@ private fun FloodAlertCard(weather: WeatherCache) {
             ) {
                 Icon(
                     imageVector = if (contentColor == MaterialTheme.colorScheme.onErrorContainer) Icons.Default.Warning else Icons.Default.WaterDrop,
-                    contentDescription = null,
+                    contentDescription = title,
                     tint = contentColor,
                     modifier = Modifier.padding(top = 2.dp)
                 )
@@ -445,7 +513,8 @@ private fun WeatherDetailCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .semantics(mergeDescendants = true) {},
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.Start
         ) {
@@ -457,7 +526,7 @@ private fun WeatherDetailCard(
             ) {
                 Icon(
                     imageVector = item.icon,
-                    contentDescription = null,
+                    contentDescription = item.label,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )

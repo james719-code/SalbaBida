@@ -8,6 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -35,9 +38,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.firebase.auth.FirebaseAuth
+import com.project.salbabida.data.database.SalbaBidaDatabase
+import com.project.salbabida.data.preferences.UserPreferences
 import com.project.salbabida.BuildConfig
 import com.project.salbabida.R
-import com.project.salbabida.SalbaBidaApplication
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -50,9 +54,8 @@ fun MoreScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val app = SalbaBidaApplication.getInstance()
-    val preferences = app.userPreferences
-    val database = app.database
+    val preferences = remember { UserPreferences(context) }
+    val database = remember { SalbaBidaDatabase.getInstance(context) }
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     
     val isDarkTheme by preferences.isDarkTheme.collectAsState(initial = false)
@@ -552,7 +555,8 @@ private fun SettingsSection(
                 text = title,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.semantics { heading() }
             )
         }
         
@@ -580,7 +584,7 @@ private fun SettingsItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button) { onClick() } else Modifier)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)

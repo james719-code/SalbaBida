@@ -1,0 +1,33 @@
+{
+  "evacuation_centers": [
+    {
+      "name": "Sorsogon East Central School",
+      "place": {
+        "latitude": 12.9736,
+        "longitude": 124.0044
+      },
+      "address": "Sorsogon City, Sorsogon",
+      "barangay": "Sirangan",
+      "city": "Sorsogon City",
+      "province": "Sorsogon",
+      "capacity": 350,
+      "manager": "City DRRMO",
+      "contact": "911",
+      "status": "standby",
+      "updatedAt": "2026-01-08T08:00:00Z"
+    }
+  ],
+  "markers": [
+    {
+      "name": "Low-lying road near river",
+      "place": {
+        "latitude": 12.9719,
+        "longitude": 124.0061
+      },
+      "category": "FLOOD_ZONE",
+      "notes": "Historical knee-deep flooding during heavy rain",
+      "createdAt": 1767859200000,
+      "localId": "sample-local-marker-id"
+    }
+  ]
+}

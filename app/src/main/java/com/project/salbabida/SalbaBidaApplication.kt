@@ -3,41 +3,51 @@ package com.project.salbabida
 import android.app.Application
 import android.content.Context
 import android.os.Environment
-import com.project.salbabida.data.database.SalbaBidaDatabase
-import com.project.salbabida.data.preferences.UserPreferences
-import com.project.salbabida.data.AppContainer
-import com.project.salbabida.data.DefaultAppContainer
-import org.osmdroid.config.Configuration
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.launch
+import org.osmdroid.config.Configuration as OsmConfig
 import java.io.File
+import javax.inject.Inject
 
-class SalbaBidaApplication : Application() {
-    
-    lateinit var database: SalbaBidaDatabase
-        private set
-    
-    lateinit var userPreferences: UserPreferences
-        private set
-    
-    val container: AppContainer by lazy {
-        DefaultAppContainer(this)
-    }
+@HiltAndroidApp
+class SalbaBidaApplication : Application(), Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var syncManager: com.project.salbabida.data.sync.SyncManager
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        
-        // Initialize database
-        database = SalbaBidaDatabase.getInstance(this)
-        
-        // Initialize preferences
-        userPreferences = UserPreferences(this)
-        
+
         // Configure OSMDroid
         configureOsmDroid()
+
+        // Schedule periodic marker sync
+        syncManager.schedulePeriodicSync()
+
+        // Auto-sync when connectivity returns
+        val connectivityObserver = com.project.salbabida.data.sync.ConnectivityObserver(this)
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            connectivityObserver.isConnected.collect { connected ->
+                if (connected) {
+                    syncManager.syncNow()
+                }
+            }
+        }
     }
     
     private fun configureOsmDroid() {
-        Configuration.getInstance().apply {
+        OsmConfig.getInstance().apply {
             load(this@SalbaBidaApplication, getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
             userAgentValue = packageName
             

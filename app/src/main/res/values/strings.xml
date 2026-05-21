@@ -8,7 +8,20 @@
     <string name="splash_logo_desc">SalbaBida Logo</string>
     <string name="splash_title">SALBA-bida</string>
     <string name="splash_subtitle">Community Flood Preparedness</string>
-    <string name="splash_version">Version 1.0.0</string>
+    <string name="splash_version">Version 2.0.0</string>
+
+    <!-- Auth -->
+    <string name="login_email_required">Email is required</string>
+    <string name="login_invalid_email">Invalid email format</string>
+    <string name="login_password_required">Password is required</string>
+    <string name="login_password_min">Password must be at least 6 characters</string>
+    <string name="login_sign_in">Sign In</string>
+    <string name="login_no_account">Don\'t have an account?</string>
+    <string name="login_sign_up">Sign Up</string>
+    <string name="login_forgot_password">Forgot Password?</string>
+    <string name="login_reset_sent">Password reset email sent to %s</string>
+    <string name="login_enter_email_first">Enter your email first</string>
+    <string name="login_enter_valid_email">Enter a valid email</string>
 
     <!-- Home Screen -->
     <string name="weather_loading_error">Unable to load weather</string>
@@ -32,6 +45,79 @@
     <string name="alert_humidity_title">High Humidity</string>
     <string name="alert_humidity_msg">Conditions are favorable for rain. Keep an umbrella handy.</string>
 
+    <!-- Map Screen -->
+    <string name="map_tap_to_select">Tap on the map to select a location</string>
+    <string name="map_cancel">Cancel</string>
+    <string name="map_filters">Filters</string>
+    <string name="map_nearest_shelter">Nearest Shelter</string>
+    <string name="map_distance_format">%.2f km away</string>
+    <string name="map_navigate">Navigate</string>
+    <string name="map_set_home">Set Home</string>
+    <string name="map_add_marker">Add Marker</string>
+    <string name="map_set_weather">Set Weather Location</string>
+    <string name="map_purge_shelters">Purge Online Shelters</string>
+    <string name="map_online_shelters">Online Shelters</string>
+
+    <!-- Safety Screen -->
+    <string name="safety_flashlight">Flashlight</string>
+    <string name="safety_siren">Emergency Siren</string>
+    <string name="safety_hotlines">Emergency Hotlines</string>
+    <string name="safety_call">Call</string>
+
+    <!-- Settings / More -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_dark_theme">Dark Theme</string>
+    <string name="settings_dynamic_colors">Dynamic Colors</string>
+    <string name="settings_update_location">Update Location</string>
+    <string name="settings_clear_cache">Clear Cache</string>
+    <string name="settings_delete_markers">Delete All Markers</string>
+    <string name="settings_logout">Logout</string>
+    <string name="settings_sync_now">Sync Now</string>
+
+    <!-- Preparedness Screen -->
+    <string name="prep_tab_before">Before</string>
+    <string name="prep_tab_during">During</string>
+    <string name="prep_tab_after">After</string>
+    <string name="prep_search_hint">Search preparedness tips…</string>
+    <string name="prep_expand">Expand</string>
+    <string name="prep_collapse">Collapse</string>
+
+    <!-- Before Tips -->
+    <string name="prep_before_1_title">Listen to Weather Reports</string>
+    <string name="prep_before_1_desc">Always listen to weather reports from PAGASA and NDRRMC to be prepared for storm and flood warnings.</string>
+    <string name="prep_before_2_title">Prepare an Emergency Kit</string>
+    <string name="prep_before_2_desc">Prepare an Emergency Kit containing food, water, medicine, flashlight, batteries, and important documents.</string>
+    <string name="prep_before_3_title">Relocate Important Items</string>
+    <string name="prep_before_3_desc">Move important belongings such as documents, electronics, and furniture to the upper floors to prevent flood damage.</string>
+    <string name="prep_before_4_title">Check Your Home\'s Stability</string>
+    <string name="prep_before_4_desc">Make sure your home is sturdy and there are no holes or gaps that floodwater could enter through.</string>
+    <string name="prep_before_5_title">Know the Evacuation Center</string>
+    <string name="prep_before_5_desc">Know the nearest evacuation center and safe routes to get there so you can evacuate quickly if needed.</string>
+    <string name="prep_before_6_title">Use the SALBA-bida App</string>
+    <string name="prep_before_6_desc">For additional preparation, use the SALBA-bida app to receive real-time updates and emergency assistance.</string>
+
+    <!-- During Tips -->
+    <string name="prep_during_1_title">Stay in a Safe Place</string>
+    <string name="prep_during_1_desc">Stay in a safe area and avoid wading in floodwater, especially if you don\'t know its depth, to prevent danger.</string>
+    <string name="prep_during_2_title">Turn Off Electricity</string>
+    <string name="prep_during_2_desc">Make sure the main power switch is off and avoid cables or outlets submerged in water to prevent electrocution.</string>
+    <string name="prep_during_3_title">Stay Tuned to News</string>
+    <string name="prep_during_3_desc">Continue to follow news for updates and advisories from authorities to stay safe and prepared.</string>
+    <string name="prep_during_4_title">Stay Calm and Ready</string>
+    <string name="prep_during_4_desc">Stay alert for approaching rescuers and don\'t panic so you can be evacuated more easily if necessary.</string>
+    <string name="prep_during_5_title">Use the SALBA-bida App</string>
+    <string name="prep_during_5_desc">Monitor the SALBA-bida app to keep your Barangay alert about your area\'s condition and receive important updates.</string>
+
+    <!-- After Tips -->
+    <string name="prep_after_1_title">Check Electricity Before Turning On</string>
+    <string name="prep_after_1_desc">Make sure no live cables or outlets are submerged in water before turning on electricity to ensure safety.</string>
+    <string name="prep_after_2_title">Report Damaged Facilities</string>
+    <string name="prep_after_2_desc">Report damaged facilities such as power poles, water pipes, and others to authorities to prevent further damage or accidents.</string>
+    <string name="prep_after_3_title">Avoid Dirty Water</string>
+    <string name="prep_after_3_desc">Avoid wading in dirty floodwater to prevent sickness and infection.</string>
+    <string name="prep_after_4_title">Check SALBA-bida App for Help</string>
+    <string name="prep_after_4_desc">Visit the SALBA-bida app for donations from Government and Non-government Organizations as help for those affected by severe flooding.</string>
+
     <!-- About Screen -->
     <string name="about_title">About</string>
     <string name="about_back_desc">Back</string>
@@ -54,5 +140,29 @@
     <string name="about_developer_name">James Ryan S. Gallego</string>
     <string name="about_powered_by">Powered by OpenStreetMap and OpenWeatherMap</string>
     <string name="about_copyright">© 2026 SALBA-bida. All Rights Reserved.</string>
+
+    <!-- Bottom Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_map">Map</string>
+    <string name="nav_safety">Safety</string>
+    <string name="nav_preparedness">Preparedness</string>
+    <string name="nav_more">More</string>
+
+    <!-- Top Bar Titles -->
+    <string name="topbar_evacuation_map">Evacuation Map</string>
+    <string name="topbar_safety_tools">Safety Tools</string>
+    <string name="topbar_flood_preparedness">Flood Preparedness</string>
+
+    <!-- Common -->
+    <string name="common_cancel">Cancel</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_update">Update</string>
+    <string name="common_yes">Yes</string>
+    <string name="common_close">Close</string>
+    <string name="common_back">Back</string>
+    <string name="common_email_label">Email</string>
+    <string name="common_password_label">Password</string>
+    <string name="common_unknown_error">Unknown error</string>
 
 </resources>

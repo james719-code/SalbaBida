@@ -1,144 +1,162 @@
-# SALBA-bida
+# SalbaBida
 
-A flood disaster management Android application built with Kotlin and Jetpack Compose.
+Offline-capable flood preparedness and evacuation support app for Philippine communities.
 
-## Overview
+SalbaBida is a Kotlin Android app for flood readiness, weather monitoring, evacuation mapping, safety tools, and Filipino disaster-preparedness content. It combines OpenWeatherMap weather data, OSMDroid maps, Firebase, Room, DataStore, WorkManager, and Material 3.
 
-SALBA-bida is designed to help communities in the Philippines prepare for, respond to, and recover from flood events. The application provides real-time weather updates, evacuation center mapping, and comprehensive flood preparedness information.
+## Status
 
-## Features
+- Current app version: `2.0.0`
+- Release candidate notes: [docs/release-v1.0.0.md](docs/release-v1.0.0.md)
+- CI: Android debug build and unit tests run through GitHub Actions
+- Test focus: flood risk scoring, offline marker defaults, weather cache behavior
 
-### Location Services
-- GPS-based location detection during onboarding
-- Location permission request with user-friendly prompts
-- Update location option in Settings for users who move
-- Automatic map centering based on user location
+## Core Features
 
 ### Weather Monitoring
-- Real-time weather data from OpenWeatherMap API
-- 12-hour automatic caching with manual refresh option
-- Temperature, humidity, wind speed, and visibility display
-- Location-based weather updates
+
+- Real-time weather data from OpenWeatherMap
+- 12-hour weather cache through Room
+- Temperature, humidity, wind, pressure, visibility, and cloudiness
+- Pull-to-refresh weather updates
+- Flood risk scoring from weather, nearby flood zones, and manual alert notes
 
 ### Evacuation Map
-- Interactive OSMDroid map centered on user location
-- Evacuation center markers fetched from Firebase
-- Home location tracking with distance calculations
-- Nearest evacuation center display with distance in kilometers
-- Offline map marker addition stored locally
-- Marker categories: Evacuation Center, Flood Zone, Safe Area, Resource Center
-- Edit and delete individual markers
-- Delete all markers option in Settings for data refresh
-- Cohesive blue-themed UI optimized for light and dark modes
-- Background synchronization when connectivity returns
 
-### Flood Preparedness
-- Categorized tips: Before, During, and After flood events
-- Searchable tip database
-- Expandable cards for detailed information
-- Content in Filipino for local accessibility
+- OSMDroid map centered on user location or selected city
+- Firebase evacuation centers
+- Offline markers stored locally
+- Background sync when connectivity returns
+- Marker categories:
+  - Evacuation Center
+  - Flood Zone
+  - Safe Area
+  - Resource Center
 
-### Theming and Customization
-- Dark theme support
-- Dynamic colors support (Android 12+)
-- Material 3 design system
+### Offline Support
 
-### Authentication
+- Weather cache remains available for 12 hours
+- Preparedness tips are bundled with the app
+- Offline markers are saved in Room
+- WorkManager sync retries pending markers when a connection is available
+
+### Preparedness and Safety
+
+- Filipino preparedness tips for before, during, and after floods
+- Safety tools and emergency hotline access
 - Firebase Authentication with email/password
-- Secure user management
-- Terms and conditions acceptance tracking
+- DataStore-backed settings and onboarding preferences
+
+## Disaster Data
+
+The disaster-data model is documented in:
+
+- [docs/disaster-data.md](docs/disaster-data.md)
+- [docs/firebase-schema.md](docs/firebase-schema.md)
+- [docs/evacuation-center-sample.json](docs/evacuation-center-sample.json)
+- [docs/risk-level-logic.md](docs/risk-level-logic.md)
+- [docs/offline-sync.md](docs/offline-sync.md)
+
+These documents define marker categories, Firestore fields, sample evacuation-center records, flood-risk scoring, and offline sync behavior.
 
 ## Tech Stack
 
-- **Language**: Kotlin
-- **UI Framework**: Jetpack Compose with Material 3
-- **Architecture**: MVVM with Repository pattern
-- **Local Database**: Room
-- **Cloud Database**: Firebase Firestore
-- **Networking**: Retrofit with OkHttp
-- **Maps**: OSMDroid with Mapnik tiles
-- **Location**: Google Play Services Location
-- **Authentication**: Firebase Auth
-- **Preferences**: DataStore
-- **Background Work**: WorkManager
+- Kotlin
+- Jetpack Compose and Material 3
+- MVVM with repository pattern
+- Hilt dependency injection
+- Room
+- DataStore
+- Retrofit and OkHttp
+- Firebase Auth and Firestore
+- OSMDroid
+- Google Play Services Location
+- WorkManager
 
 ## Requirements
 
-- Android SDK 24+ (Android 7.0 Nougat)
-- Target SDK 35 (Android 15)
+- Android SDK 24+
+- Target SDK 35
+- JDK 17
 - Google Play Services for location features
-- Internet connection for weather updates and sync
-- Location permission for map and weather features
+- Firebase project for authentication and Firestore
+- OpenWeatherMap API key
+
+## Configuration
+
+### Firebase
+
+1. Create a Firebase project.
+2. Add an Android app using package name `com.project.salbabida`.
+3. Download `google-services.json`.
+4. Place it at `app/google-services.json`.
+5. Enable Email/Password authentication.
+6. Create the Firestore collections documented in [docs/firebase-schema.md](docs/firebase-schema.md).
+
+### Weather API
+
+Add your OpenWeatherMap key to `local.properties`:
+
+```properties
+OPENWEATHER_API_KEY=your_api_key_here
+```
+
+## Build and Test
+
+```bash
+./gradlew assembleDebug
+./gradlew testDebugUnitTest
+```
+
+Install a debug APK:
+
+```bash
+./gradlew installDebug
+```
 
 ## Project Structure
 
-```
+```text
 app/src/main/java/com/project/salbabida/
 ├── data/
 │   ├── api/             # Retrofit services and API client
 │   ├── database/        # Room entities, DAOs, and database
-│   ├── model/           # Data models
-│   └── preferences/     # DataStore user preferences
+│   ├── model/           # Weather and location models
+│   ├── preferences/     # DataStore user preferences
+│   ├── repository/      # Weather and map repositories
+│   ├── risk/            # Flood risk scoring
+│   └── sync/            # WorkManager offline-marker sync
+├── di/                  # Hilt modules
 ├── navigation/          # Navigation routes and graph
-├── ui/
-│   ├── screens/
-│   │   ├── auth/        # Login, SignUp, LocationSelection
-│   │   ├── home/        # Weather display
-│   │   ├── map/         # OSMDroid map with evacuation markers
-│   │   ├── preparedness/# Flood preparedness tips
-│   │   ├── settings/    # App settings with location update
-│   │   └── about/       # About screen
-│   └── theme/           # Material 3 theming
+├── ui/                  # Compose screens and theme
 └── SalbaBidaApplication.kt
 ```
 
-## Building the Project
+## Testing
 
-1. Clone the repository
-2. Open in Android Studio (Ladybug or newer recommended)
-3. Sync Gradle files
-4. Add your Firebase configuration
-5. Build and run on device or emulator
+Current unit-test coverage includes:
 
-```bash
-./gradlew assembleDebug
-./gradlew installDebug
-```
+- Flood risk scoring for low, moderate, and emergency scenarios
+- Offline marker default sync status
 
-## Configuration
+Recommended next tests:
 
-### Firebase Setup
-1. Create a Firebase project at console.firebase.google.com
-2. Add Android app with package name `com.project.salbabida`
-3. Download `google-services.json` and place in `app/` directory
-4. Enable Authentication with Email/Password provider
-5. Create Firestore database with collections:
-   - `evacuation_centers` - Evacuation center locations
-   - `users` - User data
-
-### Weather API
-The app uses OpenWeatherMap API for weather data. Configure the API key in the weather API service.
+- Weather repository cache behavior
+- Marker repository offline saves
+- Sync worker retry behavior
+- Authentication routing
+- ViewModel loading, success, and error states
 
 ## Permissions
 
-The app requires the following permissions:
-- `ACCESS_FINE_LOCATION` - Precise location for map centering
-- `ACCESS_COARSE_LOCATION` - Approximate location fallback
-- `INTERNET` - Weather data and Firebase sync
-- `ACCESS_NETWORK_STATE` - Network availability checking
-
-## Offline Support
-
-The app supports comprehensive offline functionality:
-- Weather data cached locally for 12 hours
-- Map tiles cached for offline viewing
-- Custom markers can be added offline and sync when connected
-- Flood preparedness tips available offline
-- User preferences stored locally
+- `ACCESS_FINE_LOCATION`
+- `ACCESS_COARSE_LOCATION`
+- `INTERNET`
+- `ACCESS_NETWORK_STATE`
 
 ## Developer
 
-**James Ryan S. Gallego**
+James Ryan S. Gallego
 
 ## License
 

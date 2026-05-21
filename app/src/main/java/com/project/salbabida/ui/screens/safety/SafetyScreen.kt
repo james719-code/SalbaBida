@@ -33,6 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -107,7 +109,7 @@ fun SafetyScreen(
                 text = "Quick Access",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 4.dp)
+                modifier = Modifier.semantics { heading() }.padding(bottom = 4.dp)
             )
             
             Row(
@@ -143,7 +145,7 @@ fun SafetyScreen(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                modifier = Modifier.semantics { heading() }.padding(top = 12.dp, bottom = 4.dp)
             )
         }
 
@@ -258,7 +260,7 @@ fun SafetyToolCard(
                 ) {
                     Icon(
                         imageVector = icon,
-                        contentDescription = null,
+                        contentDescription = title,
                         tint = contentColor,
                         modifier = Modifier.size(24.dp)
                     )
@@ -312,7 +314,7 @@ fun HotlineCard(
             ) {
                 Icon(
                     imageVector = hotline.icon,
-                    contentDescription = null,
+                    contentDescription = hotline.name,
                     tint = hotline.color,
                     modifier = Modifier.size(24.dp)
                 )
@@ -337,7 +339,7 @@ fun HotlineCard(
             
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = "View",
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier.size(20.dp)
             )

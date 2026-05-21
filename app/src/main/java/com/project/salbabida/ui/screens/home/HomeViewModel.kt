@@ -1,36 +1,71 @@
 package com.project.salbabida.ui.screens.home
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.project.salbabida.data.database.entities.HomeLocation
+import com.project.salbabida.data.database.entities.MarkerCategory
+import com.project.salbabida.data.database.entities.OfflineMarker
 import com.project.salbabida.data.database.entities.WeatherCache
 import com.project.salbabida.data.preferences.UserPreferences
+import com.project.salbabida.data.repository.MapRepository
 import com.project.salbabida.data.repository.WeatherRepository
+import com.project.salbabida.data.risk.FloodRiskAssessment
+import com.project.salbabida.data.risk.FloodRiskScorer
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
+import javax.inject.Inject
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 data class HomeUiState(
     val weatherData: WeatherCache? = null,
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val error: String? = null,
-    val locationName: String = ""
+    val locationName: String = "",
+    val floodRiskAssessment: FloodRiskAssessment? = null
 )
 
-class HomeViewModel(
+@HiltViewModel
+class HomeViewModel @Inject constructor(
     private val repository: WeatherRepository,
+    private val mapRepository: MapRepository,
     private val preferences: UserPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private var latestMarkers: List<OfflineMarker> = emptyList()
+    private var latestHomeLocation: HomeLocation? = null
+
     init {
+        observeRiskContext()
         loadWeather(forceRefresh = false)
+    }
+
+    private fun observeRiskContext() {
+        viewModelScope.launch {
+            combine(
+                mapRepository.observeAllMarkers(),
+                mapRepository.observeHomeLocation()
+            ) { markers, homeLocation ->
+                markers to homeLocation
+            }.collect { (markers, homeLocation) ->
+                latestMarkers = markers
+                latestHomeLocation = homeLocation
+                updateFloodRiskAssessment()
+            }
+        }
     }
 
     fun refresh() {
@@ -96,7 +131,7 @@ class HomeViewModel(
                 // 2. Check Cache
                 val cached = repository.getCachedWeather(cacheKey)
                 if (cached != null) {
-                    _uiState.value = _uiState.value.copy(weatherData = cached)
+                    setWeatherData(cached)
                 }
                 
                 // 3. Decide to Fetch
@@ -113,7 +148,7 @@ class HomeViewModel(
                             if (savedLocationName.isNullOrBlank() && (!hasCoordinates || userLocationLabel.isBlank())) {
                                 _uiState.value = _uiState.value.copy(locationName = fetchedName)
                             }
-                            _uiState.value = _uiState.value.copy(weatherData = fetchedWeather)
+                            setWeatherData(fetchedWeather)
                         },
                         onFailure = { e ->
                             // Keep showing cached data if available; surface error
@@ -143,17 +178,51 @@ class HomeViewModel(
             }
         }
     }
-}
 
-class HomeViewModelFactory(
-    private val repository: WeatherRepository,
-    private val preferences: UserPreferences
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return HomeViewModel(repository, preferences) as T
+    private fun setWeatherData(weather: WeatherCache) {
+        _uiState.value = _uiState.value.copy(weatherData = weather)
+        updateFloodRiskAssessment()
+    }
+
+    private fun updateFloodRiskAssessment() {
+        val weather = _uiState.value.weatherData ?: return
+        val home = latestHomeLocation
+        val nearestFloodZoneDistanceKm = home?.let { homeLocation ->
+            latestMarkers
+                .asSequence()
+                .filter { it.category == MarkerCategory.FLOOD_ZONE }
+                .map {
+                    calculateDistance(
+                        homeLocation.latitude,
+                        homeLocation.longitude,
+                        it.latitude,
+                        it.longitude
+                    )
+                }
+                .minOrNull()
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
+        val manualAlertActive = latestMarkers.any { marker ->
+            marker.category == MarkerCategory.FLOOD_ZONE &&
+                marker.notes?.contains("alert", ignoreCase = true) == true
+        }
+
+        _uiState.value = _uiState.value.copy(
+            floodRiskAssessment = FloodRiskScorer.assess(
+                weather = weather,
+                nearestFloodZoneDistanceKm = nearestFloodZoneDistanceKm,
+                manualAlertActive = manualAlertActive
+            )
+        )
+    }
+
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val earthRadius = 6371.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2).pow(2) +
+            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+            sin(dLon / 2).pow(2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return earthRadius * c
     }
 }

@@ -11,16 +11,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.project.salbabida.data.preferences.UserPreferences
 import com.project.salbabida.navigation.AppNavigation
-import com.project.salbabida.SalbaBidaApplication
 import com.project.salbabida.ui.theme.SalbaBidaTheme
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var userPreferences: UserPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
-        val userPreferences = SalbaBidaApplication.getInstance().userPreferences
         
         setContent {
             val isDarkTheme by userPreferences.isDarkTheme.collectAsState(initial = false)

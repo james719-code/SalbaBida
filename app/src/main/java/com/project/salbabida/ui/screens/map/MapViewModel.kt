@@ -1,7 +1,6 @@
 package com.project.salbabida.ui.screens.map
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.project.salbabida.data.database.entities.HomeLocation
 import com.project.salbabida.data.database.entities.MarkerCategory
@@ -10,11 +9,15 @@ import com.project.salbabida.data.model.PhilippineCities
 import com.project.salbabida.data.preferences.UserPreferences
 import com.project.salbabida.data.repository.EvacuationCenter
 import com.project.salbabida.data.repository.MapRepository
+import com.project.salbabida.data.sync.SyncManager
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,6 +26,7 @@ import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import javax.inject.Inject
 
 /** UI state for the map screen. */
 data class MapUiState(
@@ -66,23 +70,29 @@ data class MapUiState(
     val isPurging: Boolean = false
 )
 
-class MapViewModel(
+@HiltViewModel
+class MapViewModel @Inject constructor(
     private val repository: MapRepository,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val syncManager: SyncManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
+    // Debounced map center to avoid re-filtering on every scroll frame
+    private val _rawMapCenter = MutableStateFlow(Pair(13.6252, 123.1826))
+
     // Derived: markers filtered by selected categories + proximity
+    @OptIn(FlowPreview::class)
     val filteredMarkers: StateFlow<List<OfflineMarker>> = combine(
-        _uiState
-    ) { states ->
-        val state = states[0]
+        _uiState,
+        _rawMapCenter.debounce(300L)
+    ) { state, debouncedCenter ->
         state.offlineMarkers.filter { marker ->
             state.selectedCategories.contains(marker.category) &&
                     calculateDistance(
-                        state.currentMapCenter.first, state.currentMapCenter.second,
+                        debouncedCenter.first, debouncedCenter.second,
                         marker.latitude, marker.longitude
                     ) <= MARKER_VISIBILITY_RADIUS_KM
         }
@@ -93,6 +103,7 @@ class MapViewModel(
         observeOfflineMarkers()
         observeUserPreferences()
         loadEvacuationCenters()
+        syncManager.schedulePeriodicSync()
     }
 
     // ── Observation ────────────────────────────────────────────────────
@@ -198,6 +209,7 @@ class MapViewModel(
     // ── User actions ───────────────────────────────────────────────────
 
     fun onMapCenterChanged(lat: Double, lon: Double) {
+        _rawMapCenter.value = Pair(lat, lon)
         _uiState.update { it.copy(currentMapCenter = Pair(lat, lon)) }
     }
 
@@ -277,6 +289,7 @@ class MapViewModel(
                 notes = notes
             )
             repository.insertMarker(marker)
+            syncManager.syncNow()
             _uiState.update {
                 it.copy(showAddMarkerSheet = false, selectedPoint = null)
             }
@@ -293,6 +306,7 @@ class MapViewModel(
         val original = _uiState.value.selectedMarkerForEdit ?: return
         viewModelScope.launch {
             repository.updateMarker(original.copy(name = name, category = category, notes = notes))
+            syncManager.syncNow()
             _uiState.update {
                 it.copy(showEditMarkerSheet = false, selectedMarkerForEdit = null)
             }
@@ -413,16 +427,6 @@ class MapViewModel(
                     sin(dLon / 2).pow(2)
             val c = 2 * atan2(sqrt(a), sqrt(1 - a))
             return earthRadius * c
-        }
-    }
-
-    class Factory(
-        private val repository: MapRepository,
-        private val userPreferences: UserPreferences
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MapViewModel(repository, userPreferences) as T
         }
     }
 }

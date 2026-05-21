@@ -71,7 +71,8 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.project.salbabida.SalbaBidaApplication
+import com.project.salbabida.data.database.SalbaBidaDatabase
+import com.project.salbabida.data.preferences.UserPreferences
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -83,9 +84,8 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val app = SalbaBidaApplication.getInstance()
-    val preferences = app.userPreferences
-    val database = app.database
+    val preferences = remember { UserPreferences(context) }
+    val database = remember { SalbaBidaDatabase.getInstance(context) }
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     
     val isDarkTheme by preferences.isDarkTheme.collectAsState(initial = false)

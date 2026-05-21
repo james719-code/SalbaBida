@@ -52,6 +52,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -64,7 +65,6 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.project.salbabida.R
-import com.project.salbabida.SalbaBidaApplication
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -79,14 +79,16 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var isResettingPassword by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
     
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
-    val preferences = SalbaBidaApplication.getInstance().userPreferences
+    val preferences = remember(context) { com.project.salbabida.data.preferences.UserPreferences(context) }
     
     fun validateAndLogin() {
         emailError = null
@@ -296,7 +298,58 @@ fun LoginScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                         
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Forgot Password button
+                        TextButton(
+                            onClick = {
+                                if (email.isBlank()) {
+                                    emailError = "Enter your email first"
+                                    return@TextButton
+                                }
+                                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                    emailError = "Enter a valid email"
+                                    return@TextButton
+                                }
+                                isResettingPassword = true
+                                auth.sendPasswordResetEmail(email)
+                                    .addOnSuccessListener {
+                                        isResettingPassword = false
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "Password reset email sent to $email"
+                                            )
+                                        }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        isResettingPassword = false
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                e.localizedMessage ?: "Failed to send reset email"
+                                            )
+                                        }
+                                    }
+                            },
+                            enabled = !isResettingPassword && !isLoading,
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            if (isResettingPassword) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color(0xFF818CF8)
+                                )
+                            } else {
+                                Text(
+                                    "Forgot Password?",
+                                    color = Color(0xFF818CF8),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
                         
                         Button(
                             onClick = { validateAndLogin() },

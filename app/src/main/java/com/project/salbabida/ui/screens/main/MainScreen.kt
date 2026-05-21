@@ -63,6 +63,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.res.stringResource
+import com.project.salbabida.R
 import com.project.salbabida.navigation.BottomNavRoute
 import com.project.salbabida.ui.screens.home.HomeScreen
 import com.project.salbabida.ui.screens.map.MapScreen
@@ -87,11 +89,11 @@ fun MainScreen(
     val currentDestination = navBackStackEntry?.destination
 
     val navItems = listOf(
-        BottomNavItem("Home", Icons.Filled.Home, Icons.Outlined.Home, BottomNavRoute.Home.route),
-        BottomNavItem("Map", Icons.Filled.Map, Icons.Outlined.Map, BottomNavRoute.Map.route),
-        BottomNavItem("Safety", Icons.Filled.HealthAndSafety, Icons.Outlined.HealthAndSafety, BottomNavRoute.Safety.route),
-        BottomNavItem("Preparedness", Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook, BottomNavRoute.Preparedness.route),
-        BottomNavItem("More", Icons.Filled.Settings, Icons.Outlined.Settings, BottomNavRoute.More.route)
+        BottomNavItem(stringResource(R.string.nav_home), Icons.Filled.Home, Icons.Outlined.Home, BottomNavRoute.Home.route),
+        BottomNavItem(stringResource(R.string.nav_map), Icons.Filled.Map, Icons.Outlined.Map, BottomNavRoute.Map.route),
+        BottomNavItem(stringResource(R.string.nav_safety), Icons.Filled.HealthAndSafety, Icons.Outlined.HealthAndSafety, BottomNavRoute.Safety.route),
+        BottomNavItem(stringResource(R.string.nav_preparedness), Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook, BottomNavRoute.Preparedness.route),
+        BottomNavItem(stringResource(R.string.nav_more), Icons.Filled.Settings, Icons.Outlined.Settings, BottomNavRoute.More.route)
     )
 
     val colorScheme = MaterialTheme.colorScheme
@@ -106,12 +108,12 @@ fun MainScreen(
                 title = {
                     Text(
                         text = when (currentDestination?.route) {
-                            BottomNavRoute.Home.route -> "Home"
-                            BottomNavRoute.Map.route -> "Evacuation Map"
-                            BottomNavRoute.Safety.route -> "Safety Tools"
-                            BottomNavRoute.Preparedness.route -> "Flood Preparedness"
-                            BottomNavRoute.More.route -> "More"
-                            else -> "SALBA-bida"
+                            BottomNavRoute.Home.route -> stringResource(R.string.nav_home)
+                            BottomNavRoute.Map.route -> stringResource(R.string.topbar_evacuation_map)
+                            BottomNavRoute.Safety.route -> stringResource(R.string.topbar_safety_tools)
+                            BottomNavRoute.Preparedness.route -> stringResource(R.string.topbar_flood_preparedness)
+                            BottomNavRoute.More.route -> stringResource(R.string.nav_more)
+                            else -> stringResource(R.string.app_name)
                         },
                         fontWeight = FontWeight.Bold
                     )
